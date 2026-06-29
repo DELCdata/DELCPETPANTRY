@@ -1453,12 +1453,42 @@ function Clients({clients,setClients,distributions,setDistributions,products,inv
   const [showModal,setShowModal]=useState(false);
   const [editClient,setEditClient]=useState(null);
   const [selectedClient,setSelectedClient]=useState(null);
+  const [deleteConfirm,setDeleteConfirm]=useState(null);
+
+  async function deleteClient(id){
+    const clientDists=distributions.filter(d=>d.clientId===id).map(d=>d.id);
+    if(clientDists.length){
+      await sb.from('distribution_items').delete().in('distribution_id',clientDists);
+      await sb.from('distributions').delete().eq('client_id',id);
+    }
+    await sb.from('pets').delete().eq('client_id',id);
+    await sb.from('clients').delete().eq('id',id);
+    setClients(prev=>prev.filter(c=>c.id!==id));
+    setDistributions(prev=>prev.filter(d=>d.clientId!==id));
+    setDeleteConfirm(null);
+    if(selectedClient?.id===id) setSelectedClient(null);
+  }
   const [editDist,setEditDist]=useState(null);  // distribution being edited
   const [editDistItems,setEditDistItems]=useState([]);
   const [editDistDate,setEditDistDate]=useState('');
   const [editDistNotes,setEditDistNotes]=useState('');
   const [editUpcInput,setEditUpcInput]=useState('');
   const [editConfirm,setEditConfirm]=useState(false);
+  const [deleteDistConfirm,setDeleteDistConfirm]=useState(null);
+
+  async function deleteDistribution(id){
+    // Return items to inventory
+    const dist=distributions.find(d=>d.id===id);
+    if(dist){
+      const updates={};
+      dist.items.forEach(i=>{updates[i.productId]=(updates[i.productId]||0)+i.qty;});
+      setInventory(prev=>prev.map(i=>updates[i.productId]?{...i,qty:i.qty+updates[i.productId]}:i));
+    }
+    await sb.from('distribution_items').delete().eq('distribution_id',id);
+    await sb.from('distributions').delete().eq('id',id);
+    setDistributions(prev=>prev.filter(d=>d.id!==id));
+    setDeleteDistConfirm(null);
+  }
 
   const inv=useMemo(()=>{const m={};inventory.forEach(i=>m[i.productId]=i.qty);return m;},[inventory]);
 
@@ -1622,6 +1652,7 @@ function Clients({clients,setClients,distributions,setDistributions,products,inv
           <div style={{display:'flex',gap:8}}>
             <button className="btn btn-outline" onClick={()=>{setEditClient(cl);setShowModal(true)}}>Edit Client</button>
             <button className="btn btn-gold" onClick={()=>navigate('pickup',{clientId:cl.id})}>🛍 Record Pickup</button>
+            <button className="btn btn-danger" onClick={()=>setDeleteConfirm(cl.id)}>🗑 Delete</button>
           </div>
         </div>
         <div className="grid-2 mb-4">
@@ -1663,7 +1694,10 @@ function Clients({clients,setClients,distributions,setDistributions,products,inv
                     <span className="text-xs text-muted" style={{marginLeft:10}}>{d.items.length} product{d.items.length!==1?'s':''} · {totalUnits} unit{totalUnits!==1?'s':''}</span>
                     {d.notes&&<span className="text-xs text-muted" style={{marginLeft:10}}>· {d.notes}</span>}
                   </div>
-                  <button className="btn btn-sm btn-outline" onClick={()=>openEditDist(d)}>✏️ Edit Pickup</button>
+                  <div style={{display:'flex',gap:6}}>
+                    <button className="btn btn-sm btn-outline" onClick={()=>openEditDist(d)}>✏️ Edit</button>
+                    <button className="btn btn-sm btn-danger" onClick={()=>setDeleteDistConfirm(d.id)}>🗑</button>
+                  </div>
                 </div>
                 <div style={{display:'flex',flexDirection:'column',gap:4,paddingLeft:10,borderLeft:'3px solid var(--gray-200)'}}>
                   {d.items.map((item,idx)=>{
@@ -1779,10 +1813,16 @@ function Clients({clients,setClients,distributions,setDistributions,products,inv
         <ConfirmModal show={editConfirm}
           message={`Save changes to this pickup? Inventory will be adjusted to reflect any differences from the original.`}
           onConfirm={saveEditDist} onCancel={()=>setEditConfirm(false)}/>
+        <ConfirmModal show={!!deleteDistConfirm}
+          message="Delete this pickup record? Items will be returned to inventory."
+          onConfirm={()=>deleteDistribution(deleteDistConfirm)} onCancel={()=>setDeleteDistConfirm(null)}/>
 
         <Modal show={showModal} onClose={()=>{setShowModal(false);setEditClient(null)}} title="Edit Client" wide>
           <ClientForm client={editClient} onSave={saveClient} onCancel={()=>{setShowModal(false);setEditClient(null)}}/>
         </Modal>
+        <ConfirmModal show={!!deleteConfirm&&selectedClient?.id===deleteConfirm}
+          message={`Delete ${cl.firstName} ${cl.lastName} and all their pickup history? This cannot be undone.`}
+          onConfirm={()=>deleteClient(deleteConfirm)} onCancel={()=>setDeleteConfirm(null)}/>
       </div>
     );
   }
@@ -1814,6 +1854,8 @@ function Clients({clients,setClients,distributions,setDistributions,products,inv
                   ))}
                 </div>
               </div>
+              <button className="btn btn-sm btn-danger" style={{flexShrink:0}} onClick={e=>{e.stopPropagation();setDeleteConfirm(c.id);}}
+                title="Delete client">🗑</button>
             </div>
           </div>
         ))}
@@ -1821,6 +1863,9 @@ function Clients({clients,setClients,distributions,setDistributions,products,inv
       <Modal show={showModal} onClose={()=>{setShowModal(false);setEditClient(null)}} title={editClient?'Edit Client':'Add New Client'} wide>
         <ClientForm client={editClient} onSave={saveClient} onCancel={()=>{setShowModal(false);setEditClient(null)}}/>
       </Modal>
+      <ConfirmModal show={!!deleteConfirm&&!selectedClient}
+        message={`Delete ${clients.find(c=>c.id===deleteConfirm)?.firstName||''} ${clients.find(c=>c.id===deleteConfirm)?.lastName||''} and all their pickup history? This cannot be undone.`}
+        onConfirm={()=>deleteClient(deleteConfirm)} onCancel={()=>setDeleteConfirm(null)}/>
     </div>
   );
 }
@@ -2017,10 +2062,11 @@ function RecordPickup({clients,products,inventory,setInventory,distributions,set
 
 // ── REPORTS ───────────────────────────────────────────────────────────────────
 function Reports({products,inventory,batches,distributions,clients}){
-  const [report,setReport]=useState('inventory');
+  const [report,setReport]=useState('impact');
   const [dateFrom,setDateFrom]=useState('');
   const [dateTo,setDateTo]=useState('');
   const [filterType,setFilterType]=useState('All');
+  const [filterClient,setFilterClient]=useState('');
 
   const inv=useMemo(()=>{const m={};inventory.forEach(i=>m[i.productId]=i.qty);return m;},[inventory]);
   const prodMap=useMemo(()=>{const m={};products.forEach(p=>m[p.id]=p);return m;},[products]);
@@ -2033,9 +2079,11 @@ function Reports({products,inventory,batches,distributions,clients}){
   }
 
   const REPORTS=[
-    {id:'inventory',label:'📦 Inventory by Category'},
-    {id:'donations',label:'📥 Donations Received'},
+    {id:'impact',label:'🐾 Community Impact'},
+    {id:'by-client',label:'👤 By Client'},
     {id:'distributions',label:'🛍 Distribution History'},
+    {id:'donations',label:'📥 Donations Received'},
+    {id:'inventory',label:'📦 Inventory'},
     {id:'low',label:'⚠️ Low Stock'},
     {id:'out',label:'🚫 Out of Stock'},
     {id:'cat',label:'🐱 Cat Supplies'},
@@ -2043,73 +2091,268 @@ function Reports({products,inventory,batches,distributions,clients}){
     {id:'other',label:'🐾 Other Animals'},
   ];
 
+  // ── COMMUNITY IMPACT REPORT ──────────────────────────────────────────────
+  function ImpactReport(){
+    const filteredDists=distributions.filter(d=>inRange(d.date));
+
+    // Households served
+    const householdsServed=new Set(filteredDists.map(d=>d.clientId)).size;
+    const totalVisits=filteredDists.length;
+
+    // Animal counts across ALL clients who had at least one pickup in range
+    const activeClientIds=new Set(filteredDists.map(d=>d.clientId));
+    const activePets=clients.filter(c=>activeClientIds.has(c.id)).flatMap(c=>c.pets||[]);
+    const catCount=activePets.filter(p=>p.animalType==='Cat').length;
+    const dogCount=activePets.filter(p=>p.animalType==='Dog').length;
+    const otherCount=activePets.filter(p=>p.animalType==='Other').length;
+    const totalPets=activePets.length;
+
+    // Total units distributed by animal type
+    const unitsByType={Cat:0,Dog:0,Other:0};
+    const unitsByCategory={};
+    filteredDists.forEach(d=>{
+      d.items.forEach(item=>{
+        const p=prodMap[item.productId];
+        if(p){
+          unitsByType[p.animalType]=(unitsByType[p.animalType]||0)+item.qty;
+          const key=`${p.animalType} — ${p.category}`;
+          unitsByCategory[key]=(unitsByCategory[key]||0)+item.qty;
+        }
+      });
+    });
+    const totalUnits=Object.values(unitsByType).reduce((s,v)=>s+v,0);
+
+    // Units received (donations)
+    const filteredBatches=batches.filter(b=>b.status==='finalized'&&inRange(b.date));
+    const totalReceived=filteredBatches.reduce((s,b)=>s+b.items.reduce((ss,i)=>ss+i.qty,0),0);
+
+    // Per-visit breakdown
+    const clientVisits={};
+    filteredDists.forEach(d=>{
+      if(!clientVisits[d.clientId]) clientVisits[d.clientId]={visits:0,units:0};
+      clientVisits[d.clientId].visits++;
+      clientVisits[d.clientId].units+=d.items.reduce((s,i)=>s+i.qty,0);
+    });
+
+    const statBox=(val,label,sub,color)=>(
+      <div style={{background:'var(--white)',borderRadius:'var(--radius-lg)',padding:'20px',boxShadow:'var(--shadow)',borderTop:`4px solid ${color}`,textAlign:'center'}}>
+        <div style={{fontSize:32,fontWeight:900,color}}>{val}</div>
+        <div style={{fontWeight:700,fontSize:14,color:'var(--navy)',marginTop:4}}>{label}</div>
+        {sub&&<div style={{fontSize:12,color:'var(--gray-400)',marginTop:2}}>{sub}</div>}
+      </div>
+    );
+
+    return(
+      <div>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(150px,1fr))',gap:14,marginBottom:24}}>
+          {statBox(householdsServed,'Households Served','unique families','var(--navy)')}
+          {statBox(totalVisits,'Total Visits','pickup sessions','var(--blue)')}
+          {statBox(totalPets,'Pets Helped','across all families','var(--gold)')}
+          {statBox(totalUnits,'Units Distributed','items given out','var(--green)')}
+          {statBox(totalReceived,'Units Received','donated items','var(--orange)')}
+        </div>
+
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16,marginBottom:20}}>
+          {/* Animals helped breakdown */}
+          <div className="card">
+            <div className="card-header"><span className="card-title">🐾 Animals Helped</span></div>
+            {catCount>0&&(
+              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'10px 0',borderBottom:'1px solid var(--gray-100)'}}>
+                <div style={{display:'flex',alignItems:'center',gap:10}}>
+                  <span style={{fontSize:24}}>🐱</span>
+                  <div><div className="font-bold">Cats</div><div className="text-xs text-muted">{catCount===1?'1 cat':'${catCount} cats'} across {new Set(clients.filter(c=>activeClientIds.has(c.id)&&(c.pets||[]).some(p=>p.animalType==='Cat')).map(c=>c.id)).size} household{new Set(clients.filter(c=>activeClientIds.has(c.id)&&(c.pets||[]).some(p=>p.animalType==='Cat')).map(c=>c.id)).size!==1?'s':''}</div></div>
+                </div>
+                <div style={{textAlign:'right'}}>
+                  <div style={{fontSize:24,fontWeight:900,color:'#7d3c98'}}>{catCount}</div>
+                  <div style={{fontSize:11,color:'var(--gray-400)'}}>{unitsByType.Cat||0} units given</div>
+                </div>
+              </div>
+            )}
+            {dogCount>0&&(
+              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'10px 0',borderBottom:'1px solid var(--gray-100)'}}>
+                <div style={{display:'flex',alignItems:'center',gap:10}}>
+                  <span style={{fontSize:24}}>🐶</span>
+                  <div><div className="font-bold">Dogs</div><div className="text-xs text-muted">across {new Set(clients.filter(c=>activeClientIds.has(c.id)&&(c.pets||[]).some(p=>p.animalType==='Dog')).map(c=>c.id)).size} household{new Set(clients.filter(c=>activeClientIds.has(c.id)&&(c.pets||[]).some(p=>p.animalType==='Dog')).map(c=>c.id)).size!==1?'s':''}</div></div>
+                </div>
+                <div style={{textAlign:'right'}}>
+                  <div style={{fontSize:24,fontWeight:900,color:'#a04000'}}>{dogCount}</div>
+                  <div style={{fontSize:11,color:'var(--gray-400)'}}>{unitsByType.Dog||0} units given</div>
+                </div>
+              </div>
+            )}
+            {otherCount>0&&(
+              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'10px 0'}}>
+                <div style={{display:'flex',alignItems:'center',gap:10}}>
+                  <span style={{fontSize:24}}>🐾</span>
+                  <div><div className="font-bold">Other Animals</div><div className="text-xs text-muted">birds, small animals, etc.</div></div>
+                </div>
+                <div style={{textAlign:'right'}}>
+                  <div style={{fontSize:24,fontWeight:900,color:'#1a6b3a'}}>{otherCount}</div>
+                  <div style={{fontSize:11,color:'var(--gray-400)'}}>{unitsByType.Other||0} units given</div>
+                </div>
+              </div>
+            )}
+            {totalPets===0&&<div className="text-sm text-muted">No pickups in selected date range.</div>}
+          </div>
+
+          {/* Units by category */}
+          <div className="card">
+            <div className="card-header"><span className="card-title">📦 Units Distributed by Category</span></div>
+            {Object.entries(unitsByCategory).sort((a,b)=>b[1]-a[1]).map(([cat,qty])=>(
+              <div key={cat} style={{display:'flex',justifyContent:'space-between',padding:'7px 0',borderBottom:'1px solid var(--gray-100)'}}>
+                <span className="text-sm">{cat}</span>
+                <span className="font-bold text-sm">{qty}</span>
+              </div>
+            ))}
+            {Object.keys(unitsByCategory).length===0&&<div className="text-sm text-muted">No distributions in range.</div>}
+          </div>
+        </div>
+
+        {/* Narrative summary */}
+        {totalVisits>0&&(
+          <div className="alert alert-info" style={{fontSize:15,lineHeight:1.7}}>
+            <strong>📋 Summary:</strong> During this period, the DELC Pet Pantry served <strong>{householdsServed} household{householdsServed!==1?'s':''}</strong> across <strong>{totalVisits} visit{totalVisits!==1?'s':''}</strong>, 
+            providing support for <strong>{totalPets} pet{totalPets!==1?'s':''}</strong>
+            {catCount>0?` including ${catCount} cat${catCount!==1?'s':''}`:''}{dogCount>0?`, ${dogCount} dog${dogCount!==1?'s':''}`:''}{otherCount>0?`, and ${otherCount} other animal${otherCount!==1?'s':''}`:''}.
+            A total of <strong>{totalUnits} unit{totalUnits!==1?'s':''}</strong> of pet supplies were distributed.
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // ── BY CLIENT REPORT ─────────────────────────────────────────────────────
+  function ByClientReport(){
+    const filtered=clients.filter(c=>{
+      if(filterClient&&!(c.firstName+' '+c.lastName).toLowerCase().includes(filterClient.toLowerCase())) return false;
+      const hasDist=distributions.some(d=>d.clientId===c.id&&inRange(d.date));
+      return hasDist||!filterClient;
+    });
+
+    return(
+      <div>
+        <input className="form-control mb-3" placeholder="Filter by client name…"
+          value={filterClient} onChange={e=>setFilterClient(e.target.value)}/>
+        <div className="table-wrap">
+          <table>
+            <thead><tr>
+              <th>Client</th><th>Pets</th><th>Animal Types</th><th>Visits</th><th>Last Visit</th><th>Total Units</th><th>Top Item</th>
+            </tr></thead>
+            <tbody>
+              {filtered.length===0&&<tr><td colSpan={7}><div className="empty-state" style={{padding:20}}><h3>No clients match</h3></div></td></tr>}
+              {filtered.map(c=>{
+                const cDists=distributions.filter(d=>d.clientId===c.id&&inRange(d.date));
+                const visits=cDists.length;
+                const totalUnits=cDists.reduce((s,d)=>s+d.items.reduce((ss,i)=>ss+i.qty,0),0);
+                const lastVisit=cDists[0]?.date;
+                const pets=c.pets||[];
+                const animalTypes=[...new Set(pets.map(p=>p.animalType))];
+                // Find top product
+                const itemCounts={};
+                cDists.forEach(d=>d.items.forEach(i=>{itemCounts[i.productId]=(itemCounts[i.productId]||0)+i.qty;}));
+                const topPid=Object.entries(itemCounts).sort((a,b)=>b[1]-a[1])[0]?.[0];
+                const topProd=topPid?prodMap[topPid]:null;
+                return(
+                  <tr key={c.id}>
+                    <td><div className="font-bold">{c.firstName} {c.lastName}</div><div className="text-xs text-muted">{c.phone||c.email||''}</div></td>
+                    <td>{pets.length}</td>
+                    <td>
+                      <div style={{display:'flex',gap:4,flexWrap:'wrap'}}>
+                        {animalTypes.map(t=><span key={t} className={`badge ${t==='Cat'?'badge-cat':t==='Dog'?'badge-dog':'badge-other'}`}>{t==='Cat'?'🐱':t==='Dog'?'🐶':'🐾'} {t}</span>)}
+                        {animalTypes.length===0&&<span className="text-muted text-xs">None on file</span>}
+                      </div>
+                    </td>
+                    <td className="font-bold">{visits}</td>
+                    <td>{lastVisit?fmtDate(lastVisit):'—'}</td>
+                    <td className="font-bold">{totalUnits}</td>
+                    <td className="text-sm">{topProd?topProd.name:'—'}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    );
+  }
+
   function renderReport(){
     switch(report){
+      case 'impact': return <ImpactReport/>;
+      case 'by-client': return <ByClientReport/>;
       case 'inventory':{
         const rows=products.filter(p=>filterType==='All'||p.animalType===filterType);
-        return(
-          <table><thead><tr><th>Product</th><th>Brand</th><th>Animal</th><th>Category</th><th>UPC</th><th>Qty</th><th>Status</th></tr></thead>
-          <tbody>{rows.map(p=><tr key={p.id}><td>{p.name}</td><td>{p.brand}</td><td>{p.animalType}</td><td>{p.category}</td><td>{p.upc||'—'}</td><td className="font-bold">{inv[p.id]||0}</td><td>{stockBadge(inv[p.id]||0)}</td></tr>)}</tbody></table>
-        );
+        return(<table><thead><tr><th>Product</th><th>Brand</th><th>Animal</th><th>Category</th><th>UPC</th><th>Qty</th><th>Status</th></tr></thead>
+          <tbody>{rows.map(p=><tr key={p.id}><td>{p.name}</td><td>{p.brand||'—'}</td><td>{p.animalType}</td><td>{p.category}</td><td>{p.upc||'—'}</td><td className="font-bold">{inv[p.id]||0}</td><td>{stockBadge(inv[p.id]||0)}</td></tr>)}</tbody></table>);
       }
       case 'donations':{
         const rows=batches.filter(b=>b.status==='finalized'&&inRange(b.date));
-        return(
-          <table><thead><tr><th>Date</th><th>Donor</th><th>Products</th><th>Units</th><th>Notes</th></tr></thead>
-          <tbody>{rows.map(b=><tr key={b.id}><td>{fmtDate(b.date)}</td><td>{b.donor||'Anonymous'}</td><td>{b.items.length}</td><td>{b.items.reduce((s,i)=>s+i.qty,0)}</td><td>{b.notes||'—'}</td></tr>)}</tbody></table>
-        );
+        return(<table><thead><tr><th>Date</th><th>Donor</th><th>Products</th><th>Units</th><th>Notes</th></tr></thead>
+          <tbody>{rows.map(b=><tr key={b.id}><td>{fmtDate(b.date)}</td><td>{b.donor||'Anonymous'}</td><td>{b.items.length}</td><td>{b.items.reduce((s,i)=>s+i.qty,0)}</td><td>{b.notes||'—'}</td></tr>)}</tbody></table>);
       }
       case 'distributions':{
-        const rows=distributions.filter(d=>inRange(d.date));
-        return(
-          <table><thead><tr><th>Date</th><th>Client</th><th>Items</th><th>Units</th><th>Notes</th></tr></thead>
-          <tbody>{rows.map(d=>{const cl=clientMap[d.clientId];return<tr key={d.id}><td>{fmtDate(d.date)}</td><td>{cl?`${cl.firstName} ${cl.lastName}`:'Unknown'}</td><td>{d.items.length}</td><td>{d.items.reduce((s,i)=>s+i.qty,0)}</td><td>{d.notes||'—'}</td></tr>})}</tbody></table>
-        );
+        const rows=distributions.filter(d=>inRange(d.date)&&(filterClient===''||clients.find(c=>c.id===d.clientId&&(c.firstName+' '+c.lastName).toLowerCase().includes(filterClient.toLowerCase()))));
+        return(<table><thead><tr><th>Date</th><th>Client</th><th>Animals</th><th>Items</th><th>Units</th><th>Notes</th></tr></thead>
+          <tbody>{rows.map(d=>{
+            const cl=clientMap[d.clientId];
+            const pets=cl?.pets||[];
+            return(<tr key={d.id}>
+              <td>{fmtDate(d.date)}</td>
+              <td className="font-bold">{cl?`${cl.firstName} ${cl.lastName}`:'Unknown'}</td>
+              <td><div style={{display:'flex',gap:3,flexWrap:'wrap'}}>{[...new Set(pets.map(p=>p.animalType))].map(t=><span key={t} className={`badge ${t==='Cat'?'badge-cat':t==='Dog'?'badge-dog':'badge-other'}`} style={{fontSize:10}}>{t==='Cat'?'🐱':t==='Dog'?'🐶':'🐾'}</span>)}</div></td>
+              <td>{d.items.length}</td>
+              <td>{d.items.reduce((s,i)=>s+i.qty,0)}</td>
+              <td className="text-sm text-muted">{d.notes||'—'}</td>
+            </tr>);
+          })}</tbody></table>);
       }
       case 'low':{
         const rows=products.filter(p=>{const q=inv[p.id]||0;return q>0&&q<=LOW_STOCK_THRESHOLD;});
-        return(
-          <table><thead><tr><th>Product</th><th>Animal</th><th>Category</th><th>Qty</th></tr></thead>
-          <tbody>{rows.map(p=><tr key={p.id}><td>{p.name}</td><td>{animalBadge(p.animalType)}</td><td>{p.category}</td><td><span className="badge badge-low">{inv[p.id]}</span></td></tr>)}</tbody></table>
-        );
+        return(<table><thead><tr><th>Product</th><th>Animal</th><th>Category</th><th>Qty</th></tr></thead>
+          <tbody>{rows.map(p=><tr key={p.id}><td>{p.name}</td><td>{animalBadge(p.animalType)}</td><td>{p.category}</td><td><span className="badge badge-low">{inv[p.id]}</span></td></tr>)}</tbody></table>);
       }
       case 'out':{
         const rows=products.filter(p=>(inv[p.id]||0)===0);
-        return(
-          <table><thead><tr><th>Product</th><th>Animal</th><th>Category</th><th>UPC</th></tr></thead>
-          <tbody>{rows.map(p=><tr key={p.id}><td>{p.name}</td><td>{animalBadge(p.animalType)}</td><td>{p.category}</td><td>{p.upc||'—'}</td></tr>)}</tbody></table>
-        );
+        return(<table><thead><tr><th>Product</th><th>Animal</th><th>Category</th><th>UPC</th></tr></thead>
+          <tbody>{rows.map(p=><tr key={p.id}><td>{p.name}</td><td>{animalBadge(p.animalType)}</td><td>{p.category}</td><td>{p.upc||'—'}</td></tr>)}</tbody></table>);
       }
       case 'cat':case 'dog':case 'other':{
         const type=report==='cat'?'Cat':report==='dog'?'Dog':'Other';
         const rows=products.filter(p=>p.animalType===type);
-        return(
-          <table><thead><tr><th>Product</th><th>Brand</th><th>Category</th><th>Size</th><th>On Hand</th><th>Status</th></tr></thead>
-          <tbody>{rows.map(p=><tr key={p.id}><td>{p.name}</td><td>{p.brand||'—'}</td><td>{p.category}</td><td>{p.size||'—'}</td><td className="font-bold">{inv[p.id]||0}</td><td>{stockBadge(inv[p.id]||0)}</td></tr>)}</tbody></table>
-        );
+        return(<table><thead><tr><th>Product</th><th>Brand</th><th>Category</th><th>Size</th><th>On Hand</th><th>Status</th></tr></thead>
+          <tbody>{rows.map(p=><tr key={p.id}><td>{p.name}</td><td>{p.brand||'—'}</td><td>{p.category}</td><td>{p.size||'—'}</td><td className="font-bold">{inv[p.id]||0}</td><td>{stockBadge(inv[p.id]||0)}</td></tr>)}</tbody></table>);
       }
       default: return null;
     }
   }
 
   function exportReport(){
-    const rpt=renderReportData();
-    if(rpt) exportCSV(rpt.rows,rpt.cols,'DELC_PetPantry_'+report+'_'+today());
+    let rows=[], cols=[];
+    switch(report){
+      case 'inventory':
+        cols=[{key:'name',label:'Product'},{key:'brand',label:'Brand'},{key:'animalType',label:'Animal'},{key:'category',label:'Category'},{key:'upc',label:'UPC'},{key:'qty',label:'Qty'},{key:'status',label:'Status'}];
+        rows=products.filter(p=>filterType==='All'||p.animalType===filterType).map(p=>({name:p.name,brand:p.brand||'',animalType:p.animalType,category:p.category,upc:p.upc||'',qty:inv[p.id]||0,status:(inv[p.id]||0)===0?'Out of Stock':(inv[p.id]||0)<=LOW_STOCK_THRESHOLD?'Low Stock':'In Stock'}));
+        break;
+      case 'donations':
+        cols=[{key:'date',label:'Date'},{key:'donor',label:'Donor'},{key:'products',label:'Products'},{key:'units',label:'Units'},{key:'notes',label:'Notes'}];
+        rows=batches.filter(b=>b.status==='finalized'&&inRange(b.date)).map(b=>({date:b.date,donor:b.donor||'Anonymous',products:b.items.length,units:b.items.reduce((s,i)=>s+i.qty,0),notes:b.notes||''}));
+        break;
+      case 'distributions':
+        cols=[{key:'date',label:'Date'},{key:'client',label:'Client'},{key:'items',label:'Items'},{key:'units',label:'Units'},{key:'notes',label:'Notes'}];
+        rows=distributions.filter(d=>inRange(d.date)).map(d=>{const cl=clientMap[d.clientId];return{date:d.date,client:cl?`${cl.firstName} ${cl.lastName}`:'Unknown',items:d.items.length,units:d.items.reduce((s,i)=>s+i.qty,0),notes:d.notes||''};});
+        break;
+      case 'by-client':
+        cols=[{key:'name',label:'Client'},{key:'pets',label:'Pets'},{key:'types',label:'Animal Types'},{key:'visits',label:'Visits'},{key:'units',label:'Total Units'},{key:'lastVisit',label:'Last Visit'}];
+        rows=clients.map(c=>{const cDists=distributions.filter(d=>d.clientId===c.id&&inRange(d.date));return{name:`${c.firstName} ${c.lastName}`,pets:(c.pets||[]).length,types:[...new Set((c.pets||[]).map(p=>p.animalType))].join(', '),visits:cDists.length,units:cDists.reduce((s,d)=>s+d.items.reduce((ss,i)=>ss+i.qty,0),0),lastVisit:cDists[0]?.date||''};}).filter(r=>r.visits>0||!filterClient);
+        break;
+      default: return;
+    }
+    if(rows.length) exportCSV(rows,cols,'DELC_PetPantry_'+report+'_'+today());
   }
 
-  function renderReportData(){
-    switch(report){
-      case 'inventory': return {
-        cols:[{key:'name',label:'Product'},{key:'brand',label:'Brand'},{key:'animalType',label:'Animal'},{key:'category',label:'Category'},{key:'upc',label:'UPC'},{key:'qty',label:'Qty'},{key:'status',label:'Status'}],
-        rows:products.filter(p=>filterType==='All'||p.animalType===filterType).map(p=>({name:p.name,brand:p.brand||'',animalType:p.animalType,category:p.category,upc:p.upc||'',qty:inv[p.id]||0,status:(inv[p.id]||0)===0?'Out of Stock':(inv[p.id]||0)<=LOW_STOCK_THRESHOLD?'Low Stock':'In Stock'}))
-      };
-      case 'donations': return {
-        cols:[{key:'date',label:'Date'},{key:'donor',label:'Donor'},{key:'products',label:'Products'},{key:'units',label:'Units'},{key:'notes',label:'Notes'}],
-        rows:batches.filter(b=>b.status==='finalized'&&inRange(b.date)).map(b=>({date:b.date,donor:b.donor||'Anonymous',products:b.items.length,units:b.items.reduce((s,i)=>s+i.qty,0),notes:b.notes||''}))
-      };
-      default: return null;
-    }
-  }
+  const showDateFilter=['donations','distributions','by-client','impact'].includes(report);
+  const showTypeFilter=['inventory','cat','dog','other','low','out'].includes(report);
+  const showClientFilter=['distributions','by-client'].includes(report);
 
   return(
     <div className="page">
@@ -2117,27 +2360,40 @@ function Reports({products,inventory,batches,distributions,clients}){
         <div className="section-title">📊 Reports</div>
         <button className="btn btn-outline" onClick={exportReport}>📥 Export CSV</button>
       </div>
-      <div className="tabs mb-4">
-        {REPORTS.map(r=><button key={r.id} className={`tab ${report===r.id?'active':''}`} onClick={()=>setReport(r.id)}>{r.label}</button>)}
+      <div style={{display:'flex',gap:6,flexWrap:'wrap',marginBottom:16}}>
+        {REPORTS.map(r=>(
+          <button key={r.id} className={`btn ${report===r.id?'btn-primary':'btn-outline'}`}
+            style={{fontSize:13}} onClick={()=>setReport(r.id)}>{r.label}</button>
+        ))}
       </div>
       <div className="report-filter-bar">
-        <div className="form-group" style={{margin:0,flex:1}}>
-          <label className="form-label">From Date</label>
-          <input type="date" className="form-control" value={dateFrom} onChange={e=>setDateFrom(e.target.value)}/>
-        </div>
-        <div className="form-group" style={{margin:0,flex:1}}>
-          <label className="form-label">To Date</label>
-          <input type="date" className="form-control" value={dateTo} onChange={e=>setDateTo(e.target.value)}/>
-        </div>
-        <div className="form-group" style={{margin:0,flex:1}}>
-          <label className="form-label">Animal Type</label>
-          <select className="form-control" value={filterType} onChange={e=>setFilterType(e.target.value)}>
-            <option>All</option>{ANIMAL_TYPES.map(t=><option key={t}>{t}</option>)}
-          </select>
-        </div>
-        <button className="btn btn-outline" onClick={()=>{setDateFrom('');setDateTo('');setFilterType('All');}}>Clear</button>
+        {showDateFilter&&<>
+          <div className="form-group" style={{margin:0,flex:1}}>
+            <label className="form-label">From Date</label>
+            <input type="date" className="form-control" value={dateFrom} onChange={e=>setDateFrom(e.target.value)}/>
+          </div>
+          <div className="form-group" style={{margin:0,flex:1}}>
+            <label className="form-label">To Date</label>
+            <input type="date" className="form-control" value={dateTo} onChange={e=>setDateTo(e.target.value)}/>
+          </div>
+        </>}
+        {showTypeFilter&&(
+          <div className="form-group" style={{margin:0,flex:1}}>
+            <label className="form-label">Animal Type</label>
+            <select className="form-control" value={filterType} onChange={e=>setFilterType(e.target.value)}>
+              <option>All</option>{ANIMAL_TYPES.map(t=><option key={t}>{t}</option>)}
+            </select>
+          </div>
+        )}
+        {showClientFilter&&(
+          <div className="form-group" style={{margin:0,flex:2}}>
+            <label className="form-label">Filter by Client</label>
+            <input className="form-control" placeholder="Type client name…" value={filterClient} onChange={e=>setFilterClient(e.target.value)}/>
+          </div>
+        )}
+        <button className="btn btn-outline" onClick={()=>{setDateFrom('');setDateTo('');setFilterType('All');setFilterClient('');}}>Clear</button>
       </div>
-      <div className="table-wrap">{renderReport()}</div>
+      <div className={report==='impact'||report==='by-client'?'':'table-wrap'}>{renderReport()}</div>
     </div>
   );
 }
@@ -2484,5 +2740,7 @@ function App(){
 
 ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
 </script>
+</body>
+</html>
 </body>
 </html>
