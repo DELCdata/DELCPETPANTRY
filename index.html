@@ -952,14 +952,14 @@ function ReceiveDonations({products,setProducts,inventory,setInventory,batches,s
         </div>
       )}
 
-      <Modal show={showProductModal} onClose={()=>{setShowProductModal(false);setPendingPrefill(null)}}
+      <Modal show={showProductModal} onClose={()=>{setShowProductModal(false);setPendingPrefill(null);setTimeout(()=>upcRef.current?.focus(),50);}}
         title={pendingPrefill?._source?`Product Found — ${pendingPrefill._source}`:'New Product — Enter Details'} wide>
         <div className={`alert ${pendingPrefill?._source?'alert-success':'alert-info'} mb-3`}>
           {pendingPrefill?._source
             ? `✅ Product info found via ${pendingPrefill._source}. Please confirm the details below, set the animal type and category, then save.`
             : 'UPC not found in any database. Please fill in the product details manually and click Save.'}
         </div>
-        <ProductForm product={pendingPrefill} onSave={saveNewProduct} onCancel={()=>{setShowProductModal(false);setPendingPrefill(null)}}/>
+        <ProductForm product={pendingPrefill} onSave={saveNewProduct} onCancel={()=>{setShowProductModal(false);setPendingPrefill(null);setTimeout(()=>upcRef.current?.focus(),50);}}/>
       </Modal>
       <ConfirmModal show={confirm} message={`Finalize this batch of ${batchItems.length} products (${batchItems.reduce((s,i)=>s+i.qty,0)} units)? This will update inventory immediately.`}
         onConfirm={finalizeBatch} onCancel={()=>setConfirm(false)}/>
@@ -1455,6 +1455,34 @@ function Clients({clients,setClients,distributions,setDistributions,products,inv
   const [selectedClient,setSelectedClient]=useState(null);
   const [deleteConfirm,setDeleteConfirm]=useState(null);
 
+  function printClientHistory(id){
+    const cl=clients.find(c=>c.id===id);
+    if(!cl) return;
+    const cDists=distributions.filter(d=>d.clientId===id).sort((a,b)=>b.date.localeCompare(a.date));
+    const rows=cDists.map(d=>{
+      const items=d.items.map(i=>{
+        const p=products.find(p=>p.id===i.productId);
+        return `<tr><td style="padding:6px 10px;border:1px solid #ccc">${p?p.name:'Unknown'}</td><td style="padding:6px 10px;border:1px solid #ccc">${p?p.animalType:''}</td><td style="padding:6px 10px;border:1px solid #ccc">${p?p.category:''}</td><td style="padding:6px 10px;border:1px solid #ccc;text-align:center">${i.qty}</td></tr>`;
+      }).join('');
+      return `<tr><td colspan="4" style="background:#f0f2f5;padding:8px 10px;font-weight:700;border:1px solid #ccc">${fmtDate(d.date)}${d.notes?' — '+d.notes:''}</td></tr>${items}`;
+    }).join('');
+    const petsHtml=(cl.pets||[]).map(p=>`<li>${p.name} (${p.animalType}${p.breed?', '+p.breed:''}${p.age?', age '+p.age:''}${p.foodPref?', prefers: '+p.foodPref:''}${p.specialNotes?' — '+p.specialNotes:''})</li>`).join('');
+    const w=window.open('','_blank');
+    w.document.write(`<html><head><title>Client History — ${cl.firstName} ${cl.lastName}</title>
+    <style>body{font-family:sans-serif;padding:30px;max-width:800px;margin:0 auto}h1{color:#1a2744}h2{color:#1a2744;font-size:15px;margin-top:20px}table{width:100%;border-collapse:collapse;margin-bottom:16px}th{background:#f0f2f5;padding:8px 10px;border:1px solid #ccc;text-align:left}p{margin:4px 0;font-size:14px}ul{margin:4px 0;font-size:14px}</style></head>
+    <body>
+    <h1>DELC Pet Pantry — Client Record</h1>
+    <p><strong>${cl.firstName} ${cl.lastName}</strong></p>
+    ${cl.phone?`<p>📞 ${cl.phone}</p>`:''}${cl.email?`<p>✉️ ${cl.email}</p>`:''}${cl.address?`<p>📍 ${cl.address}</p>`:''}${cl.notes?`<p><em>Notes: ${cl.notes}</em></p>`:''}
+    <h2>Animals (${(cl.pets||[]).length})</h2>
+    ${petsHtml?`<ul>${petsHtml}</ul>`:'<p>None on file.</p>'}
+    <h2>Pickup History (${cDists.length} visit${cDists.length!==1?'s':''})</h2>
+    ${cDists.length?`<table><thead><tr><th>Product</th><th>Animal</th><th>Category</th><th>Qty</th></tr></thead><tbody>${rows}</tbody></table>`:'<p>No pickups on file.</p>'}
+    <p style="margin-top:30px;font-size:12px;color:#aaa">Printed ${new Date().toLocaleDateString()} — DELC Pet Pantry</p>
+    </body></html>`);
+    w.print();
+  }
+
   async function deleteClient(id){
     const clientDists=distributions.filter(d=>d.clientId===id).map(d=>d.id);
     if(clientDists.length){
@@ -1820,9 +1848,30 @@ function Clients({clients,setClients,distributions,setDistributions,products,inv
         <Modal show={showModal} onClose={()=>{setShowModal(false);setEditClient(null)}} title="Edit Client" wide>
           <ClientForm client={editClient} onSave={saveClient} onCancel={()=>{setShowModal(false);setEditClient(null)}}/>
         </Modal>
-        <ConfirmModal show={!!deleteConfirm&&selectedClient?.id===deleteConfirm}
-          message={`Delete ${cl.firstName} ${cl.lastName} and all their pickup history? This cannot be undone.`}
-          onConfirm={()=>deleteClient(deleteConfirm)} onCancel={()=>setDeleteConfirm(null)}/>
+        {deleteConfirm&&selectedClient?.id===deleteConfirm&&(()=>{
+          const dc=clients.find(c=>c.id===deleteConfirm);
+          const dcDists=distributions.filter(d=>d.clientId===deleteConfirm);
+          return(
+            <Modal show onClose={()=>setDeleteConfirm(null)} title={`Delete ${dc?.firstName||''} ${dc?.lastName||''}?`}
+              footer={<>
+                <button className="btn btn-outline" onClick={()=>setDeleteConfirm(null)}>Cancel — Keep Client</button>
+                {dcDists.length>0&&<button className="btn btn-outline" onClick={()=>{printClientHistory(deleteConfirm);deleteClient(deleteConfirm);}}>🖨 Print History &amp; Delete</button>}
+                <button className="btn btn-danger" onClick={()=>deleteClient(deleteConfirm)}>🗑 Delete Without Printing</button>
+              </>}>
+              {dcDists.length>0?(
+                <div>
+                  <div className="alert alert-warning mb-3">
+                    ⚠️ <strong>{dc?.firstName} {dc?.lastName}</strong> has <strong>{dcDists.length} pickup record{dcDists.length!==1?'s':''}</strong> on file. Deleting will permanently remove this client and all their history.
+                  </div>
+                  <div className="text-sm mb-2">Would you like to <strong>print their history</strong> before deleting?</div>
+                  <div className="text-xs text-muted">The print option will open a printable summary of all their visits, then delete the record.</div>
+                </div>
+              ):(
+                <div className="text-sm">This client has no pickup history. Are you sure you want to delete them?</div>
+              )}
+            </Modal>
+          );
+        })()}
       </div>
     );
   }
@@ -1863,9 +1912,30 @@ function Clients({clients,setClients,distributions,setDistributions,products,inv
       <Modal show={showModal} onClose={()=>{setShowModal(false);setEditClient(null)}} title={editClient?'Edit Client':'Add New Client'} wide>
         <ClientForm client={editClient} onSave={saveClient} onCancel={()=>{setShowModal(false);setEditClient(null)}}/>
       </Modal>
-      <ConfirmModal show={!!deleteConfirm&&!selectedClient}
-        message={`Delete ${clients.find(c=>c.id===deleteConfirm)?.firstName||''} ${clients.find(c=>c.id===deleteConfirm)?.lastName||''} and all their pickup history? This cannot be undone.`}
-        onConfirm={()=>deleteClient(deleteConfirm)} onCancel={()=>setDeleteConfirm(null)}/>
+      {deleteConfirm&&!selectedClient&&(()=>{
+        const dc=clients.find(c=>c.id===deleteConfirm);
+        const dcDists=distributions.filter(d=>d.clientId===deleteConfirm);
+        return(
+          <Modal show onClose={()=>setDeleteConfirm(null)} title={`Delete ${dc?.firstName||''} ${dc?.lastName||''}?`}
+            footer={<>
+              <button className="btn btn-outline" onClick={()=>setDeleteConfirm(null)}>Cancel — Keep Client</button>
+              {dcDists.length>0&&<button className="btn btn-outline" onClick={()=>{printClientHistory(deleteConfirm);deleteClient(deleteConfirm);}}>🖨 Print History &amp; Delete</button>}
+              <button className="btn btn-danger" onClick={()=>deleteClient(deleteConfirm)}>🗑 Delete Without Printing</button>
+            </>}>
+            {dcDists.length>0?(
+              <div>
+                <div className="alert alert-warning mb-3">
+                  ⚠️ <strong>{dc?.firstName} {dc?.lastName}</strong> has <strong>{dcDists.length} pickup record{dcDists.length!==1?'s':''}</strong> on file. Deleting will permanently remove this client and all their history.
+                </div>
+                <div className="text-sm mb-2">Would you like to <strong>print their history</strong> before deleting?</div>
+                <div className="text-xs text-muted">The print option will open a printable summary of all their visits, then delete the record.</div>
+              </div>
+            ):(
+              <div className="text-sm">This client has no pickup history. Are you sure you want to delete them?</div>
+            )}
+          </Modal>
+        );
+      })()}
     </div>
   );
 }
@@ -2740,7 +2810,5 @@ function App(){
 
 ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
 </script>
-</body>
-</html>
 </body>
 </html>
