@@ -169,7 +169,7 @@ function productToRow(p){return{id:p.id,upc:p.upc,name:p.name,brand:p.brand,size
 function rowToInventory(r){return{id:r.id,productId:r.product_id,qty:r.qty};}
 function rowToClient(r,pets,resources){return{id:r.id,firstName:r.first_name,lastName:r.last_name,phone:r.phone||'',email:r.email||'',address:r.address||'',notes:r.notes||'',pets:pets||[],resources:resources||[]};}
 function rowToPet(r){return{id:r.id,clientId:r.client_id,name:r.name,animalType:r.animal_type||'Cat',breed:r.breed||'',age:r.age||'',specialNotes:r.special_notes||'',foodPref:r.food_pref||''};}
-function rowToResource(r){return{id:r.id,clientId:r.client_id,type:r.type||'Food',date:r.date||'',phone:r.phone||'',notes:r.notes||'',offered:r.offered||''};}
+function rowToResource(r){return{id:r.id,clientId:r.client_id,type:r.type||'Food',date:r.date||'',phone:r.phone||'',notes:r.notes||'',offered:r.offered||'',status:r.status||null};}
 function rowToBatch(r,items){return{id:r.id,date:r.date,donor:r.donor||'',status:r.status,notes:r.notes||'',items:items||[]};}
 function rowToBatchItem(r){return{productId:r.product_id,qty:r.qty,notes:r.notes||''};}
 function rowToDistribution(r,items){return{id:r.id,clientId:r.client_id,date:r.date,notes:r.notes||'',items:items||[]};}
@@ -571,12 +571,12 @@ function Clients({clients,setClients,distributions,setDistributions,products,inv
     // Resource modal state
     const [resModal,setResModal]=useState(false);
     const [editRes,setEditRes]=useState(null);
-    const [resForm,setResForm]=useState({type:'Food',date:today(),phone:'',notes:'',offered:''});
+    const [resForm,setResForm]=useState({type:'Food',date:today(),phone:'',notes:'',offered:'',status:null});
 
     function saveResource(){
       if(editRes){setForm(f=>({...f,resources:f.resources.map(r=>r.id===editRes.id?{...r,...resForm}:r)}));}
       else{setForm(f=>({...f,resources:[...f.resources,{...resForm,id:uid()}]}));}
-      setResModal(false);setEditRes(null);setResForm({type:'Food',date:today(),phone:'',notes:'',offered:''});
+      setResModal(false);setEditRes(null);setResForm({type:'Food',date:today(),phone:'',notes:'',offered:'',status:null});
     }
 
     return(
@@ -616,10 +616,12 @@ function Clients({clients,setClients,distributions,setDistributions,products,inv
             <div style={{flex:1}}>
               <div style={{fontWeight:700,fontSize:14,color:RESOURCE_COLOR[res.type]||'var(--gray-800)'}}>{res.type}</div>
               <div className="text-xs text-muted">{res.date?fmtDate(res.date):''}{res.phone?` · 📞 ${res.phone}`:''}</div>
+              {res.status==='given'&&<div className="text-xs" style={{color:'var(--green)',fontWeight:700,marginTop:2}}>✅ We helped</div>}
+              {res.status==='unable'&&<div className="text-xs" style={{color:'var(--red)',fontWeight:700,marginTop:2}}>❌ Unable to fully help</div>}
+              {res.offered&&<div className="text-xs text-muted">Offered/Given: {res.offered}</div>}
               {res.notes&&<div className="text-xs text-muted">📝 {res.notes}</div>}
-              {res.offered&&<div className="text-xs" style={{color:'var(--green)'}}>✅ {res.offered}</div>}
             </div>
-            <button className="btn btn-sm btn-outline" onClick={()=>{setEditRes(res);setResForm({type:res.type,date:res.date,phone:res.phone,notes:res.notes,offered:res.offered});setResModal(true);}}>Edit</button>
+            <button className="btn btn-sm btn-outline" onClick={()=>{setEditRes(res);setResForm({type:res.type,date:res.date,phone:res.phone,notes:res.notes,offered:res.offered,status:res.status||null});setResModal(true);}}>Edit</button>
             <button className="btn btn-sm btn-danger" onClick={()=>setForm(f=>({...f,resources:f.resources.filter(r=>r.id!==res.id)}))}>✕</button>
           </div>
         ))}
@@ -662,8 +664,28 @@ function Clients({clients,setClients,distributions,setDistributions,products,inv
             </div>
             <div className="form-group">
               <label className="form-label">Resources Offered / Given</label>
-              <input className="form-control" value={resForm.offered} onChange={e=>setResForm(f=>({...f,offered:e.target.value}))} placeholder="What was provided"/>
+              <input className="form-control" value={resForm.offered} onChange={e=>setResForm(f=>({...f,offered:e.target.value}))} placeholder="What was provided (even if partial)"/>
             </div>
+          </div>
+          <div className="form-group">
+            <label className="form-label">Outcome</label>
+            <div style={{display:'flex',gap:10}}>
+              <button type="button" onClick={()=>setResForm(f=>({...f,status:f.status==='given'?null:'given'}))}
+                style={{flex:1,padding:'11px',borderRadius:'var(--radius)',border:'1.5px solid',cursor:'pointer',fontWeight:700,fontSize:14,transition:'all .15s',
+                  borderColor:resForm.status==='given'?'var(--green)':'var(--gray-200)',
+                  background:resForm.status==='given'?'var(--green-light)':'var(--white)',
+                  color:resForm.status==='given'?'var(--green)':'var(--gray-600)'}}>
+                ✅ We Helped
+              </button>
+              <button type="button" onClick={()=>setResForm(f=>({...f,status:f.status==='unable'?null:'unable'}))}
+                style={{flex:1,padding:'11px',borderRadius:'var(--radius)',border:'1.5px solid',cursor:'pointer',fontWeight:700,fontSize:14,transition:'all .15s',
+                  borderColor:resForm.status==='unable'?'var(--red)':'var(--gray-200)',
+                  background:resForm.status==='unable'?'var(--red-light)':'var(--white)',
+                  color:resForm.status==='unable'?'var(--red)':'var(--gray-600)'}}>
+                ❌ Unable to Fully Help
+              </button>
+            </div>
+            <div className="text-xs text-muted mt-2">You can still fill in "Resources Offered" above even if unable to fully help.</div>
           </div>
           <div className="form-group">
             <label className="form-label">Notes</label>
@@ -737,8 +759,10 @@ function Clients({clients,setClients,distributions,setDistributions,products,inv
                     {r.date&&<span>{fmtDate(r.date)}</span>}
                     {r.phone&&<span> · 📞 Called from: {r.phone}</span>}
                   </div>
-                  {r.notes&&<div className="text-sm mt-2" style={{color:'var(--gray-600)'}}>📝 {r.notes}</div>}
-                  {r.offered&&<div className="text-sm mt-2" style={{color:'var(--green)',fontWeight:600}}>✅ Offered / Given: {r.offered}</div>}
+                  {r.status==='given'&&<div className="text-sm mt-2" style={{color:'var(--green)',fontWeight:700}}>✅ We helped</div>}
+                  {r.status==='unable'&&<div className="text-sm mt-2" style={{color:'var(--red)',fontWeight:700}}>❌ Unable to fully help</div>}
+                  {r.offered&&<div className="text-sm mt-1" style={{color:'var(--gray-600)'}}>Offered/Given: {r.offered}</div>}
+                  {r.notes&&<div className="text-sm mt-1" style={{color:'var(--gray-600)'}}>📝 {r.notes}</div>}
                 </div>
               </div>
             ))}
@@ -1116,9 +1140,11 @@ function App(){
         await sb.from('pets').insert(c.pets.map(p=>({id:p.id,client_id:c.id,name:p.name,animal_type:p.animalType,breed:p.breed||'',age:p.age||'',special_notes:p.specialNotes||'',food_pref:p.foodPref||''})));
       }
       // Sync resources
-      await sb.from('client_resources').delete().eq('client_id',c.id);
+      const {error:delResErr}=await sb.from('client_resources').delete().eq('client_id',c.id);
+      if(delResErr) console.error('client_resources delete error:',delResErr);
       if((c.resources||[]).length>0){
-        await sb.from('client_resources').insert(c.resources.map(r=>({id:r.id,client_id:c.id,type:r.type,date:r.date||null,phone:r.phone||null,notes:r.notes||null,offered:r.offered||null})));
+        const {error:insResErr}=await sb.from('client_resources').insert(c.resources.map(r=>({id:r.id,client_id:c.id,type:r.type,date:r.date||null,phone:r.phone||null,notes:r.notes||null,offered:r.offered||null,status:r.status||null})));
+        if(insResErr) console.error('client_resources insert error:',insResErr);
       }
     }
     const ids=next.map(c=>c.id);
