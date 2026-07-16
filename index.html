@@ -293,17 +293,62 @@ function Dashboard({products,inventory,batches,distributions,adjustments,clients
   const inv=useMemo(()=>{const m={};inventory.forEach(i=>m[i.productId]=i.qty);return m;},[inventory]);
   const cats=products.filter(p=>p.animalType==='Cat');
   const dogs=products.filter(p=>p.animalType==='Dog');
-  const others=products.filter(p=>p.animalType==='Other');
   const catQty=cats.reduce((s,p)=>s+(inv[p.id]||0),0);
   const dogQty=dogs.reduce((s,p)=>s+(inv[p.id]||0),0);
-  const otherQty=others.reduce((s,p)=>s+(inv[p.id]||0),0);
-  const lowItems=products.filter(p=>{const q=inv[p.id]||0;return q>0&&q<=LOW_STOCK_THRESHOLD});
-  const outItems=products.filter(p=>(inv[p.id]||0)===0);
+  const totalQty=inventory.reduce((s,i)=>s+i.qty,0);
   const pendingBatches=batches.filter(b=>b.status==='pending');
+
+  // Category-level stock alerts only (no individual item noise)
+  const stockAlerts=useMemo(()=>{
+    const result=[];
+    [...CAT_CATEGORIES.map(c=>({label:`Cat ${c}`,animal:'Cat',cat:c})),...DOG_CATEGORIES.map(c=>({label:`Dog ${c}`,animal:'Dog',cat:c}))].forEach(({label,animal,cat})=>{
+      const prods=products.filter(p=>p.animalType===animal&&p.category===cat);
+      if(prods.length>0){
+        const qty=prods.reduce((s,p)=>s+(inv[p.id]||0),0);
+        if(qty===0) result.push({label,level:'out',qty:0});
+        else if(qty<=10) result.push({label,level:'low',qty});
+      }
+    });
+    return result;
+  },[products,inv]);
+
+  // People helped by time period
+  const now=new Date();
+  const daysAgo=(n)=>{const d=new Date(now);d.setDate(d.getDate()-n);return d.toISOString().slice(0,10);};
+  const ytdStart=`${now.getFullYear()}-01-01`;
+  const helpedIn=(from)=>new Set(distributions.filter(d=>d.date>=from).map(d=>d.clientId)).size;
+  const helped7=helpedIn(daysAgo(7));
+  const helped30=helpedIn(daysAgo(30));
+  const helped60=helpedIn(daysAgo(60));
+  const helped90=helpedIn(daysAgo(90));
+  const helpedYTD=helpedIn(ytdStart);
+
+  // Pet type counts
+  const petCounts={Cat:0,Dog:0,Other:0};
+  clients.forEach(c=>(c.pets||[]).forEach(p=>{petCounts[p.animalType]=(petCounts[p.animalType]||0)+1;}));
+  const totalPets=Object.values(petCounts).reduce((s,v)=>s+v,0);
+
+  // Resource request counts
+  const resCounts={};
+  clients.forEach(c=>(c.resources||[]).forEach(r=>{resCounts[r.type]=(resCounts[r.type]||0)+1;}));
+  const totalRes=Object.values(resCounts).reduce((s,v)=>s+v,0);
+
   const recentBatches=[...batches].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,5);
   const recentDists=[...distributions].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,5);
-  const totalItems=products.length;
-  const totalQty=inventory.reduce((s,i)=>s+i.qty,0);
+
+  function BarRow({label,value,max,color}){
+    return(
+      <div style={{marginBottom:10}}>
+        <div style={{display:'flex',justifyContent:'space-between',fontSize:13,marginBottom:3}}>
+          <span>{label}</span><span style={{fontWeight:700,color}}>{value}</span>
+        </div>
+        <div style={{background:'var(--gray-200)',borderRadius:4,height:8,overflow:'hidden'}}>
+          <div style={{background:color,height:8,width:`${max>0?(value/max)*100:0}%`,transition:'width .4s',borderRadius:4}}/>
+        </div>
+      </div>
+    );
+  }
+
   return(
     <div className="page">
       <div className="section-header mb-4">
@@ -313,29 +358,62 @@ function Dashboard({products,inventory,batches,distributions,adjustments,clients
           <button className="btn btn-primary btn-lg" onClick={()=>navigate('pickup')}>🛍 Record Pickup</button>
         </div>
       </div>
-      {pendingBatches.length>0&&<div className="alert alert-warning mb-4">⚠️ You have {pendingBatches.length} pending receiving batch{pendingBatches.length>1?'es':''}.<button className="btn btn-sm btn-warning" style={{marginLeft:12}} onClick={()=>navigate('batch-review')}>Review Now</button></div>}
-      {outItems.length>0&&<div className="alert alert-danger mb-4">🚫 {outItems.length} item{outItems.length>1?'s are':' is'} out of stock.</div>}
+
+      {pendingBatches.length>0&&<div className="alert alert-warning mb-3">⚠️ You have {pendingBatches.length} pending receiving batch{pendingBatches.length>1?'es':''}.<button className="btn btn-sm btn-warning" style={{marginLeft:12}} onClick={()=>navigate('batch-review')}>Review Now</button></div>}
+      {stockAlerts.filter(a=>a.level==='out').length>0&&<div className="alert alert-danger mb-3">🚫 <strong>Completely out:</strong> {stockAlerts.filter(a=>a.level==='out').map(a=>a.label).join(' · ')}</div>}
+      {stockAlerts.filter(a=>a.level==='low').length>0&&<div className="alert alert-warning mb-4">⚠️ <strong>Running low:</strong> {stockAlerts.filter(a=>a.level==='low').map(a=>`${a.label} (${a.qty} left)`).join(' · ')}</div>}
+
+      {/* Stat cards */}
       <div className="grid-4 mb-4">
-        <div className="stat-card"><div className="stat-icon" style={{background:'#eaf0fb'}}>📦</div><div><div className="stat-value">{totalItems}</div><div className="stat-label">Total Products</div><div className="stat-sub">{totalQty} total units</div></div></div>
+        <div className="stat-card"><div className="stat-icon" style={{background:'#eaf0fb'}}>📦</div><div><div className="stat-value">{products.length}</div><div className="stat-label">Total Products</div><div className="stat-sub">{totalQty} total units</div></div></div>
         <div className="stat-card cat"><div className="stat-icon cat">🐱</div><div><div className="stat-value">{catQty}</div><div className="stat-label">Cat Supplies</div><div className="stat-sub">{cats.length} products</div></div></div>
         <div className="stat-card dog"><div className="stat-icon dog">🐶</div><div><div className="stat-value">{dogQty}</div><div className="stat-label">Dog Supplies</div><div className="stat-sub">{dogs.length} products</div></div></div>
-        <div className="stat-card other"><div className="stat-icon other">🐾</div><div><div className="stat-value">{otherQty}</div><div className="stat-label">Other Animals</div><div className="stat-sub">{others.length} products</div></div></div>
+        <div className="stat-card other"><div className="stat-icon other">👥</div><div><div className="stat-value">{helped30}</div><div className="stat-label">Families (30 days)</div><div className="stat-sub">{helpedYTD} this year</div></div></div>
       </div>
+
+      {/* Cat · Dog · Families Helped */}
       <div className="grid-3 mb-4">
         <div className="card">
           <div className="card-header"><span className="card-title">🐱 Cat Supplies</span></div>
-          {CAT_CATEGORIES.map(cat=>{const ps=cats.filter(p=>p.category===cat);const qty=ps.reduce((s,p)=>s+(inv[p.id]||0),0);return(<div key={cat} style={{display:'flex',justifyContent:'space-between',padding:'7px 0',borderBottom:'1px solid var(--gray-100)'}}><span className="text-sm">{cat}</span><span className="text-sm font-bold">{qty} units <span className="text-muted">({ps.length} products)</span></span></div>);})}
+          {CAT_CATEGORIES.map(cat=>{const qty=cats.filter(p=>p.category===cat).reduce((s,p)=>s+(inv[p.id]||0),0);return(<div key={cat} style={{display:'flex',justifyContent:'space-between',padding:'7px 0',borderBottom:'1px solid var(--gray-100)'}}><span className="text-sm">{cat}</span><span className="text-sm font-bold" style={{color:qty===0?'var(--red)':qty<=10?'var(--orange)':'inherit'}}>{qty} units{qty===0?' ⚠️':''}</span></div>);})}
         </div>
         <div className="card">
           <div className="card-header"><span className="card-title">🐶 Dog Supplies</span></div>
-          {DOG_CATEGORIES.map(cat=>{const ps=dogs.filter(p=>p.category===cat);const qty=ps.reduce((s,p)=>s+(inv[p.id]||0),0);return(<div key={cat} style={{display:'flex',justifyContent:'space-between',padding:'7px 0',borderBottom:'1px solid var(--gray-100)'}}><span className="text-sm">{cat}</span><span className="text-sm font-bold">{qty} units <span className="text-muted">({ps.length} products)</span></span></div>);})}
+          {DOG_CATEGORIES.map(cat=>{const qty=dogs.filter(p=>p.category===cat).reduce((s,p)=>s+(inv[p.id]||0),0);return(<div key={cat} style={{display:'flex',justifyContent:'space-between',padding:'7px 0',borderBottom:'1px solid var(--gray-100)'}}><span className="text-sm">{cat}</span><span className="text-sm font-bold" style={{color:qty===0?'var(--red)':qty<=10?'var(--orange)':'inherit'}}>{qty} units{qty===0?' ⚠️':''}</span></div>);})}
         </div>
         <div className="card">
-          <div className="card-header"><span className="card-title">🐾 Alerts</span></div>
-          <div style={{marginBottom:8}}><div className="text-xs text-muted font-bold mb-2">LOW STOCK ({lowItems.length})</div>{lowItems.length===0&&<div className="text-sm text-muted">None</div>}{lowItems.slice(0,4).map(p=>(<div key={p.id} style={{display:'flex',justifyContent:'space-between',padding:'4px 0'}}><span className="text-sm">{p.name}</span><span className="badge badge-low">{inv[p.id]}</span></div>))}</div>
-          <div><div className="text-xs text-muted font-bold mb-2">OUT OF STOCK ({outItems.length})</div>{outItems.length===0&&<div className="text-sm text-muted">None 🎉</div>}{outItems.slice(0,4).map(p=>(<div key={p.id} style={{padding:'4px 0'}}><span className="text-sm">{p.name}</span><span className="badge badge-out" style={{marginLeft:6}}>0</span></div>))}</div>
+          <div className="card-header"><span className="card-title">🏠 Families We Helped</span></div>
+          {[['Last 7 Days',helped7],['Last 30 Days',helped30],['Last 60 Days',helped60],['Last 90 Days',helped90],['Year to Date',helpedYTD]].map(([label,count])=>(
+            <div key={label} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'8px 0',borderBottom:'1px solid var(--gray-100)'}}>
+              <span className="text-sm" style={{color:'var(--gray-600)'}}>{label}</span>
+              <span style={{fontWeight:800,fontSize:17,color:'var(--navy)'}}>{count}<span className="text-xs text-muted" style={{fontWeight:400,marginLeft:4}}>famil{count===1?'y':'ies'}</span></span>
+            </div>
+          ))}
         </div>
       </div>
+
+      {/* Pet Types Chart · Resource Requests Chart */}
+      <div className="grid-2 mb-4">
+        <div className="card">
+          <div className="card-header"><span className="card-title">🐾 Pets by Type</span><span className="text-xs text-muted">{totalPets} registered</span></div>
+          {totalPets===0?<div className="text-sm text-muted">No pets on file yet.</div>:<>
+            <BarRow label="🐱 Cats" value={petCounts.Cat||0} max={totalPets} color="#9b59b6"/>
+            <BarRow label="🐶 Dogs" value={petCounts.Dog||0} max={totalPets} color="#e67e22"/>
+            <BarRow label="🐾 Other" value={petCounts.Other||0} max={totalPets} color="#27ae60"/>
+            <div className="text-xs text-muted mt-2">Across {clients.length} registered client{clients.length!==1?'s':''}</div>
+          </>}
+        </div>
+        <div className="card">
+          <div className="card-header"><span className="card-title">📋 Resource Requests</span><span className="text-xs text-muted">{totalRes} total</span></div>
+          {totalRes===0?<div className="text-sm text-muted">No resource requests on file yet.</div>:
+            RESOURCE_TYPES.filter(t=>resCounts[t]>0).sort((a,b)=>(resCounts[b]||0)-(resCounts[a]||0)).map(type=>(
+              <BarRow key={type} label={`${RESOURCE_ICON[type]||'📋'} ${type}`} value={resCounts[type]||0} max={totalRes} color={RESOURCE_COLOR[type]||'var(--navy)'}/>
+            ))
+          }
+        </div>
+      </div>
+
+      {/* Recent Activity */}
       <div className="grid-2">
         <div className="card">
           <div className="card-header"><span className="card-title">📥 Recent Donations</span><button className="btn btn-sm btn-outline" onClick={()=>navigate('batch-review')}>View All</button></div>
@@ -1154,7 +1232,7 @@ function App(){
 
   const pendingCount=batches.filter(b=>b.status==='pending').length;
   const inv=useMemo(()=>{const m={};inventory.forEach(i=>m[i.productId]=i.qty);return m;},[inventory]);
-  const outCount=products.filter(p=>(inv[p.id]||0)===0).length;
+  const outCount=useMemo(()=>[...CAT_CATEGORIES.map(c=>({a:'Cat',c})),...DOG_CATEGORIES.map(c=>({a:'Dog',c}))].filter(({a,c})=>{const ps=products.filter(p=>p.animalType===a&&p.category===c);return ps.length>0&&ps.every(p=>(inv[p.id]||0)===0);}).length,[products,inv]);
 
   function handleLogin(username){setCurrentUser(username);}
   function handleLogout(){setCurrentUser(null);setPage('dashboard');}
@@ -1211,7 +1289,7 @@ function App(){
         <div className="topbar">
           <span className="topbar-title">{PAGE_TITLES[page]||page}</span>
           <div style={{display:'flex',gap:8,alignItems:'center'}}>
-            {outCount>0&&<span className="badge badge-out">🚫 {outCount} Out of Stock</span>}
+            {outCount>0&&<span className="badge badge-out">🚫 {outCount} categor{outCount===1?'y':'ies'} out</span>}
             {pendingCount>0&&<span className="badge badge-pending">⏳ {pendingCount} Pending</span>}
             <div style={{display:'flex',alignItems:'center',gap:8,marginLeft:8,paddingLeft:12,borderLeft:'1px solid var(--gray-200)'}}>
               <span style={{fontSize:13,color:'var(--gray-600)'}}>👤 <strong>{currentUser}</strong></span>
