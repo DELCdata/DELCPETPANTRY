@@ -3,16 +3,17 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>DELC Pet Pantry</title>
+<title>delcPETPANTRY</title>
+<script src="https://delcdata.github.io/DELCAppsHub/delc-kit.js?v=4"></script>
 <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root{
-  --navy:#1a2744;--navy-dark:#111c33;--navy-light:#243460;
-  --gold:#c8a951;--gold-light:#e0c068;--gold-pale:#f5e9c0;
-  --white:#fff;--gray-50:#f8f9fa;--gray-100:#f0f2f5;--gray-200:#e0e4eb;
+  --navy:#1B3254;--navy-dark:#14273F;--navy-light:#26446f;
+  --gold:#1B3254;--gold-light:#26446f;--gold-pale:#e6ecf5;
+  --white:#fff;--gray-50:#f8f9fa;--gray-100:#eef1f6;--gray-200:#e0e4eb;
   --gray-400:#9aa3b2;--gray-600:#5a6478;--gray-800:#2d3344;
   --red:#c0392b;--red-light:#fdecea;--green:#27ae60;--green-light:#eafaf1;
   --orange:#e67e22;--orange-light:#fef5ec;--blue:#2980b9;--blue-light:#eaf4fb;
@@ -20,7 +21,7 @@
   --shadow-lg:0 4px 20px rgba(0,0,0,.16);
 }
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--gray-100);color:var(--gray-800);min-height:100vh}
+body{font-family:var(--delc-body,'Segoe UI',system-ui,sans-serif);background:var(--gray-100);color:var(--gray-800);min-height:100vh}
 #root{display:flex;min-height:100vh}
 .sidebar{width:240px;background:var(--navy-dark);display:flex;flex-direction:column;flex-shrink:0;position:fixed;left:0;top:0;bottom:0;z-index:100;overflow-y:auto}
 .sidebar-logo{padding:20px 16px;border-bottom:1px solid var(--navy-light);text-align:center}
@@ -56,8 +57,8 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--gray-100);colo
 .btn-sm{padding:5px 11px;font-size:12px}
 .btn-primary{background:var(--navy);color:var(--white)}
 .btn-primary:hover{background:var(--navy-light)}
-.btn-gold{background:var(--gold);color:var(--navy-dark)}
-.btn-gold:hover{background:var(--gold-light)}
+.btn-gold{background:var(--navy);color:#fff}
+.btn-gold:hover{background:var(--navy-light)}
 .btn-outline{background:transparent;border:1.5px solid var(--gray-200);color:var(--gray-600)}
 .btn-outline:hover{border-color:var(--navy);color:var(--navy)}
 .btn-danger{background:var(--red);color:var(--white)}
@@ -126,6 +127,39 @@ tr:hover td{background:var(--gray-50)}
 .login-error{background:var(--red-light);border:1px solid var(--red);color:var(--red);padding:10px 14px;border-radius:var(--radius);font-size:13px;margin-bottom:16px;text-align:center}
 .login-hint{background:var(--blue-light);border-radius:var(--radius);padding:12px;font-size:12px;color:var(--gray-600);margin-top:16px;line-height:1.6}
 .login-hint strong{color:var(--navy)}
+/* ── delcAPPS standard (2026-11-14): navy header + tab row, shared sign-in card, no gold ── */
+#root{display:block!important}
+.main{margin-left:0!important;max-width:none!important;min-width:0}
+.pp-bar{position:sticky;top:0;z-index:60;background:#1B3254}
+.pp-top{display:flex;align-items:center;gap:8px;padding:10px 16px;color:#fff;flex-wrap:wrap}
+.pp-top .delc-wm{font-size:19px;font-family:var(--delc-display,inherit)}
+.pp-sp{flex:1}
+.pp-user{color:#fff;opacity:.85;font-size:13px;white-space:nowrap}
+.delc-wm{display:inline-flex;align-items:baseline;font-weight:800;letter-spacing:-.01em;color:#fff;white-space:nowrap}.delc-wm b{color:#84c225;font-weight:800}.delc-wm.pill{background:#1B3254;border-radius:8px;padding:3px 10px}
+.delc-hbtn{background:rgba(255,255,255,.12);border:0;color:#fff;border-radius:8px;padding:5px 11px;font-size:13px;font-weight:700;text-decoration:none;white-space:nowrap;cursor:pointer}
+.delc-tabs{display:flex;gap:2px;padding:0 12px;background:#1B3254;border-top:1px solid #2c4870;overflow-x:auto;scrollbar-width:none}.delc-tabs::-webkit-scrollbar{display:none}
+.delc-tab{background:none;border:0;border-bottom:3px solid transparent;color:#c3cfe2;padding:10px 14px;font-weight:600;font-size:14px;line-height:1.3;white-space:nowrap;cursor:pointer;flex:0 0 auto;font-family:inherit}
+.delc-tab:hover{color:#fff}.delc-tab.on{color:#fff;border-bottom-color:#fff}
+.pp-n{display:inline-block;background:#fff;color:#1B3254;border-radius:999px;padding:0 6px;font-size:11px;font-weight:700;margin-left:6px;line-height:17px}
+.section-title{font-family:var(--delc-display,inherit)!important;font-weight:800!important;color:var(--navy)!important;letter-spacing:-.01em}
+.upc-bar span[style*="--gold"],[style*="background: var(--navy)"] span[style*="--gold"],[style*="background:var(--navy)"] span[style*="--gold"]{color:#fff!important}
+.upc-bar .btn-gold,[style*="background: var(--navy)"] .btn-gold{background:#fff;color:var(--navy)}
+.login-page{background:#eef1f6!important}
+.delc-signin-card{max-width:400px!important;width:100%;border:1px solid #dbe1ea;border-radius:16px!important;padding:28px 26px!important;box-shadow:0 8px 30px rgba(27,50,84,.08)!important;text-align:left}
+.delc-signin-top{text-align:center;margin-bottom:12px}
+.delc-signin-top .delc-logo{display:block;width:220px;max-width:85%;height:auto;margin:0 auto 12px}
+.delc-signin-top .delc-wm{font-size:20px!important;margin:0!important}
+.delc-signin-top h1{font-family:var(--delc-display,inherit);font-size:26px!important;font-weight:800;margin:12px 0 4px!important;letter-spacing:-.01em;text-align:center;color:#1B3254}
+.delc-signin-top .sub{font-size:13.5px;line-height:1.45;color:#5d6a82}
+.delc-signin-top .sub b{display:block;font-weight:600;color:#33415a;margin-bottom:2px}
+.delc-signin-links{display:flex;flex-direction:column;align-items:center;gap:9px;margin-top:16px;padding-top:14px;border-top:1px solid #e3e8f0}
+.delc-signin-links a{font-size:13px;font-weight:700;color:#1B3254;text-decoration:underline;text-underline-offset:2px}
+.login-card .form-control{border-radius:10px}.login-card .btn{border-radius:10px}
+#say-ov{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100000;display:flex;align-items:center;justify-content:center;padding:16px}
+#say-ov .say{background:#fff;border-radius:16px;padding:20px;width:100%;max-width:400px;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+#say-ov .say-m{white-space:pre-wrap;font-size:15px;line-height:1.45;color:#1d2433;max-height:55vh;overflow:auto;margin-bottom:16px}
+@media(max-width:600px){.pp-top{padding:10px 12px}.pp-user{display:none}}
+@media print{.pp-bar{display:none!important}}
 @media print{.sidebar,.topbar,.btn,.upc-bar{display:none!important}.main{margin-left:0}.page{padding:0}body{background:white}}
 @media(max-width:900px){
   .sidebar{width:56px}
@@ -161,7 +195,7 @@ tr:hover td{background:var(--gray-50)}
 .tab.active{background:var(--white);color:var(--navy);box-shadow:0 1px 4px rgba(0,0,0,.08)}
 .client-card{background:var(--white);border-radius:var(--radius-lg);box-shadow:var(--shadow);padding:16px;cursor:pointer;transition:box-shadow .15s;border:1.5px solid transparent}
 .client-card:hover{box-shadow:var(--shadow-lg);border-color:var(--navy)}
-.client-avatar{width:42px;height:42px;border-radius:50%;background:var(--navy);color:var(--gold);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;flex-shrink:0}
+.client-avatar{width:42px;height:42px;border-radius:50%;background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;flex-shrink:0}
 .batch-line{display:flex;align-items:center;gap:10px;padding:10px;border:1.5px solid var(--gray-200);border-radius:var(--radius);margin-bottom:8px;background:var(--white)}
 .report-filter-bar{background:var(--white);border-radius:var(--radius);padding:14px;margin-bottom:16px;display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;box-shadow:var(--shadow)}
 </style>
@@ -170,6 +204,18 @@ tr:hover td{background:var(--gray-50)}
 <body>
 <div id="root"></div>
 <script>
+/* in-app message box (replaces the browser's alert pop-ups, 2026-11-14) */
+function say(msg){
+  var old=document.getElementById('say-ov');if(old)old.remove();
+  var ov=document.createElement('div');ov.id='say-ov';
+  ov.innerHTML='<div class="say" role="alertdialog" aria-modal="true"><div class="say-m"></div><div style="text-align:right"><button class="btn btn-primary" id="say-ok" style="padding:10px 22px">OK</button></div></div>';
+  ov.querySelector('.say-m').textContent=String(msg==null?'':msg);
+  var done=function(){ov.remove();};
+  ov.querySelector('#say-ok').onclick=done;
+  ov.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key==='Escape'){e.preventDefault();done();}});
+  ov.addEventListener('click',function(e){if(e.target===ov)done();});
+  document.body.appendChild(ov);setTimeout(function(){var b=document.getElementById('say-ok');if(b)b.focus();},30);
+}
 /* ═══ DELC camera barcode scanner ═══
    Any 📷 button with onclick="DelcScan.near(this,{...})" scans into the input beside it,
    then fires the same Enter the input already listens for. Handheld scanners keep working.
@@ -434,7 +480,7 @@ function ProductForm({product,onSave,onCancel}){
       <div className="form-group"><label className="form-label">Notes</label><textarea className="form-control" value={form.notes} onChange={set('notes')} rows={2}/></div>
       <div style={{display:'flex',gap:10,justifyContent:'flex-end',marginTop:8}}>
         <button className="btn btn-outline" onClick={onCancel}>Cancel</button>
-        <button className="btn btn-primary" onClick={()=>{if(!form.name.trim())return alert('Product name required');onSave(form)}}>Save Product</button>
+        <button className="btn btn-primary" onClick={()=>{if(!form.name.trim())return say('Product name required');onSave(form)}}>Save Product</button>
       </div>
     </div>
   );
@@ -614,8 +660,8 @@ function ReceiveDonations({products,setProducts,inventory,setInventory,batches,s
   function saveNewProduct(form){const np={...form,id:uid()};setProducts(prev=>[...prev,np]);setInventory(prev=>[...prev,{id:uid(),productId:np.id,qty:0}]);setBatchItems(prev=>[...prev,{id:uid(),upc:np.upc,productId:np.id,name:np.name,brand:np.brand,animalType:np.animalType,category:np.category,size:np.size,image:np.image,qty:1,notes:''}]);setShowProductModal(false);setPendingPrefill(null);upcRef.current?.focus();}
   function updateItem(id,field,val){setBatchItems(prev=>prev.map(bi=>bi.id===id?{...bi,[field]:val}:bi));}
   function removeItem(id){setBatchItems(prev=>prev.filter(bi=>bi.id!==id));}
-  function finalizeBatch(){if(batchItems.length===0){alert('No items in batch.');return;}const newBatch={id:uid(),date:batchDate,donor:donor||'Anonymous',status:'finalized',notes:batchNotes,items:batchItems.map(bi=>({productId:bi.productId,qty:bi.qty,notes:bi.notes}))};const updates={};batchItems.forEach(bi=>{updates[bi.productId]=(updates[bi.productId]||0)+bi.qty;});setInventory(prev=>prev.map(i=>updates[i.productId]!==undefined?{...i,qty:i.qty+updates[i.productId]}:i));setBatches(prev=>[newBatch,...prev]);setBatchItems([]);setDonor('');setBatchNotes('');setBatchDate(today());setConfirm(false);alert('Receiving batch finalized! Inventory updated. ✅');navigate('batch-review');}
-  function savePending(){if(batchItems.length===0){alert('No items to save.');return;}const newBatch={id:uid(),date:batchDate,donor:donor||'Anonymous',status:'pending',notes:batchNotes,items:batchItems.map(bi=>({productId:bi.productId,qty:bi.qty,notes:bi.notes}))};setBatches(prev=>[newBatch,...prev]);setBatchItems([]);setDonor('');setBatchNotes('');setBatchDate(today());alert('Batch saved as pending.');navigate('batch-review');}
+  function finalizeBatch(){if(batchItems.length===0){say('No items in batch.');return;}const newBatch={id:uid(),date:batchDate,donor:donor||'Anonymous',status:'finalized',notes:batchNotes,items:batchItems.map(bi=>({productId:bi.productId,qty:bi.qty,notes:bi.notes}))};const updates={};batchItems.forEach(bi=>{updates[bi.productId]=(updates[bi.productId]||0)+bi.qty;});setInventory(prev=>prev.map(i=>updates[i.productId]!==undefined?{...i,qty:i.qty+updates[i.productId]}:i));setBatches(prev=>[newBatch,...prev]);setBatchItems([]);setDonor('');setBatchNotes('');setBatchDate(today());setConfirm(false);say('Receiving batch finalized! Inventory updated. ✅');navigate('batch-review');}
+  function savePending(){if(batchItems.length===0){say('No items to save.');return;}const newBatch={id:uid(),date:batchDate,donor:donor||'Anonymous',status:'pending',notes:batchNotes,items:batchItems.map(bi=>({productId:bi.productId,qty:bi.qty,notes:bi.notes}))};setBatches(prev=>[newBatch,...prev]);setBatchItems([]);setDonor('');setBatchNotes('');setBatchDate(today());say('Batch saved as pending.');navigate('batch-review');}
   return(
     <div className="page">
       <div className="section-header mb-4"><div className="section-title">📥 Receive Donations</div><div style={{display:'flex',gap:8}}><button className="btn btn-outline" onClick={savePending} disabled={batchItems.length===0}>Save as Pending</button><button className="btn btn-success btn-lg" onClick={()=>setConfirm(true)} disabled={batchItems.length===0}>✅ Finalize Batch</button></div></div>
@@ -637,7 +683,7 @@ function BatchReview({batches,setBatches,products,inventory,setInventory,navigat
   const [detail,setDetail]=useState(null);const [confirm,setConfirm]=useState(null);
   const prodMap=useMemo(()=>{const m={};products.forEach(p=>m[p.id]=p);return m;},[products]);
   const sorted=[...batches].sort((a,b)=>b.date.localeCompare(a.date));
-  function finalize(batch){const updates={};batch.items.forEach(i=>{updates[i.productId]=(updates[i.productId]||0)+i.qty;});setInventory(prev=>prev.map(i=>updates[i.productId]!==undefined?{...i,qty:i.qty+updates[i.productId]}:i));setBatches(prev=>prev.map(b=>b.id===batch.id?{...b,status:'finalized'}:b));setDetail(null);alert('Batch finalized! Inventory updated. ✅');}
+  function finalize(batch){const updates={};batch.items.forEach(i=>{updates[i.productId]=(updates[i.productId]||0)+i.qty;});setInventory(prev=>prev.map(i=>updates[i.productId]!==undefined?{...i,qty:i.qty+updates[i.productId]}:i));setBatches(prev=>prev.map(b=>b.id===batch.id?{...b,status:'finalized'}:b));setDetail(null);say('Batch finalized! Inventory updated. ✅');}
   function deleteBatch(id){setConfirm({msg:'Delete this batch? This cannot be undone.',cb:()=>{setBatches(prev=>prev.filter(b=>b.id!==id));setDetail(null);setConfirm(null);}});}
   return(
     <div className="page">
@@ -659,8 +705,8 @@ function Inventory({products,inventory,setInventory,navigate}){
   const invMap=useMemo(()=>{const m={};inventory.forEach(i=>m[i.productId]=i);return m;},[inventory]);
   const prodMap=useMemo(()=>{const m={};products.forEach(p=>m[p.id]=p);return m;},[products]);
   const filtered=products.filter(p=>{const q=search.toLowerCase();const match=!q||(p.name+p.brand+p.upc).toLowerCase().includes(q);const typeMatch=filterType==='All'||p.animalType===filterType;return match&&typeMatch;});
-  async function saveAdj(){const delta=parseInt(adjQty)||0;if(delta===0){alert('Enter a non-zero quantity adjustment.');return;}const newQty=Math.max(0,(inv[editItem.productId]||0)+delta);const newAdj={id:uid(),productId:editItem.productId,date:today(),qty:delta,reason:adjReason,notes:adjNotes,adjBy};setInventory(prev=>prev.map(i=>i.productId===editItem.productId?{...i,qty:newQty}:i));setAdjustments(prev=>[newAdj,...prev]);await sb.from('pet_adjustments').insert({id:newAdj.id,product_id:newAdj.productId,date:newAdj.date,qty:delta,reason:adjReason,notes:adjNotes,adj_by:adjBy});setEditItem(null);setAdjQty(0);setAdjNotes('');setAdjBy('');}
-  function printCountSheet(){const rows=filtered.map(p=>`<tr><td>${p.name}</td><td>${p.upc||''}</td><td>${inv[p.id]||0}</td><td></td><td></td></tr>`).join('');const w=window.open('','_blank');w.document.write(`<html><head><title>DELC Pet Pantry — Inventory Count Sheet</title><style>body{font-family:sans-serif;padding:20px}h2{color:#1a2744}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ccc;padding:8px;font-size:13px}th{background:#f0f2f5}</style></head><body><h2>DELC Pet Pantry — Inventory Count Sheet</h2><p>Date: ${today()}</p><table><thead><tr><th>Product Name</th><th>UPC</th><th>System Qty</th><th>Physical Count</th><th>Notes</th></tr></thead><tbody>${rows}</tbody></table></body></html>`);w.print();}
+  async function saveAdj(){const delta=parseInt(adjQty)||0;if(delta===0){say('Enter a non-zero quantity adjustment.');return;}const newQty=Math.max(0,(inv[editItem.productId]||0)+delta);const newAdj={id:uid(),productId:editItem.productId,date:today(),qty:delta,reason:adjReason,notes:adjNotes,adjBy};setInventory(prev=>prev.map(i=>i.productId===editItem.productId?{...i,qty:newQty}:i));setAdjustments(prev=>[newAdj,...prev]);await sb.from('pet_adjustments').insert({id:newAdj.id,product_id:newAdj.productId,date:newAdj.date,qty:delta,reason:adjReason,notes:adjNotes,adj_by:adjBy});setEditItem(null);setAdjQty(0);setAdjNotes('');setAdjBy('');}
+  function printCountSheet(){const rows=filtered.map(p=>`<tr><td>${p.name}</td><td>${p.upc||''}</td><td>${inv[p.id]||0}</td><td></td><td></td></tr>`).join('');const w=window.open('','_blank');w.document.write(`<html><head><title>DELC Pet Pantry — Inventory Count Sheet</title><style>@page{margin:.5in}body{font-family:sans-serif;padding:0;margin:0}h2{color:#1B3254}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ccc;padding:8px;font-size:13px}th{background:#eef1f6}${window.DELC?DELC.printCss:''}</style></head><body>${window.DELC?DELC.letterhead({title:'Inventory count sheet',sub:'Pet Pantry · '+today(),right:filtered.length+' products'}):'<h2>DELC Pet Pantry — Inventory Count Sheet</h2><p>Date: '+today()+'</p>'}<table><thead><tr><th>Product Name</th><th>UPC</th><th>System Qty</th><th>Physical Count</th><th>Notes</th></tr></thead><tbody>${rows}</tbody></table>${window.DELC?DELC.footer('delcPETPANTRY','Inventory count sheet'):''}</body></html>`);w.document.close();setTimeout(()=>{w.focus();w.print();},350);}
   return(
     <div className="page">
       <div className="section-header mb-4"><div className="section-title">📦 Inventory</div><div style={{display:'flex',gap:8}}><button className="btn btn-outline" onClick={printCountSheet}>🖨 Count Sheet</button><button className="btn btn-outline" onClick={()=>navigate('adjustments')}>View Adjustments</button></div></div>
@@ -683,7 +729,7 @@ function StockCount({products,inventory,setInventory}){
   function setCount(productId,val){const n=parseInt(val);setCounts(prev=>({...prev,[productId]:isNaN(n)||n<0?0:n}));setSaved(false);setTouchedIds(prev=>{const s=new Set(prev);s.add(productId);return s;});}
   const changed=useMemo(()=>Object.entries(counts).filter(([pid,qty])=>(inv[pid]||0)!==qty),[counts,inv]);
   async function saveCount(){
-    if(changed.length===0){alert('No changes to save.');return;}
+    if(changed.length===0){say('No changes to save.');return;}
     setSaving(true);
     const nowIso=new Date().toISOString();
     const updates={};changed.forEach(([pid,qty])=>{updates[pid]=qty;});
@@ -775,7 +821,7 @@ function ScanCount({products,setProducts,inventory,setInventory}){
   async function startSession(){
     const id=uid();const startedAt=new Date().toISOString();
     const{error}=await sb.from('pet_stock_count_sessions').insert({id,started_at:startedAt,status:'in_progress',counted_by:countedBy||null});
-    if(error){alert('Could not start count: '+error.message);return;}
+    if(error){say('Could not start count: '+error.message);return;}
     setSession({id,startedAt,countedBy});
     setScans([]);
     setTimeout(()=>upcRef.current?.focus(),50);
@@ -801,7 +847,7 @@ function ScanCount({products,setProducts,inventory,setInventory}){
     const row={id,productId,qty,method,scannedBy:countedBy,scannedAt};
     setScans(prev=>[row,...prev]);
     const{error}=await sb.from('pet_stock_count_scans').insert({id,session_id:session.id,product_id:productId,qty,method,scanned_by:countedBy||null,scanned_at:scannedAt});
-    if(error){console.error('scan insert failed:',error);setScans(prev=>prev.filter(s=>s.id!==id));alert('Could not save scan: '+error.message);}
+    if(error){console.error('scan insert failed:',error);setScans(prev=>prev.filter(s=>s.id!==id));say('Could not save scan: '+error.message);}
   }
 
   async function handleUpcSubmit(){
@@ -854,11 +900,11 @@ function ScanCount({products,setProducts,inventory,setInventory}){
     const last=scans[0];
     setScans(prev=>prev.slice(1));
     const{error}=await sb.from('pet_stock_count_scans').delete().eq('id',last.id);
-    if(error){console.error(error);setScans(prev=>[last,...prev]);alert('Could not undo: '+error.message);}
+    if(error){console.error(error);setScans(prev=>[last,...prev]);say('Could not undo: '+error.message);}
   }
 
   async function finalizeCount(){
-    if(touched.length===0){alert('No items scanned yet.');return;}
+    if(touched.length===0){say('No items scanned yet.');return;}
     const nowIso=new Date().toISOString();
     const updates={};touched.forEach(t=>{updates[t.productId]=t.counted;});
     setInventory(prev=>prev.map(i=>updates[i.productId]!==undefined?{...i,qty:updates[i.productId],lastCountedAt:nowIso}:i));
@@ -866,7 +912,7 @@ function ScanCount({products,setProducts,inventory,setInventory}){
     if(adjRows.length>0)await sb.from('pet_adjustments').insert(adjRows);
     await sb.from('pet_stock_count_sessions').update({status:'finalized',finalized_at:nowIso}).eq('id',session.id);
     setSession(null);setScans([]);setConfirmFinalize(false);
-    alert(`Count finalized! ${touched.length} product${touched.length!==1?'s':''} updated. ✅`);
+    say(`Count finalized! ${touched.length} product${touched.length!==1?'s':''} updated. ✅`);
   }
 
   if(loadingSession){
@@ -969,8 +1015,8 @@ function Clients({clients,setClients,distributions,setDistributions,products,inv
     const petsHtml=(cl.pets||[]).map(p=>`<li>${p.name} (${p.animalType}${p.breed?', '+p.breed:''}${p.age?', age '+p.age:''}${p.foodPref?', prefers: '+p.foodPref:''}${p.specialNotes?' — '+p.specialNotes:''})</li>`).join('');
     const resourcesHtml=(cl.resources||[]).length>0?`<h2>Resource Requests (${cl.resources.length})</h2><ul>${cl.resources.map(r=>`<li>${RESOURCE_ICON[r.type]||'📋'} ${r.type}${r.date?' on '+fmtDate(r.date):''}${r.phone?' · called from '+r.phone:''}${r.notes?' — '+r.notes:''}${r.offered?' | Given: '+r.offered:''}</li>`).join('')}</ul>`:'';
     const w=window.open('','_blank');
-    w.document.write(`<html><head><title>Client History — ${cl.firstName} ${cl.lastName}</title><style>body{font-family:sans-serif;padding:30px;max-width:800px;margin:0 auto}h1{color:#1a2744}h2{color:#1a2744;font-size:15px;margin-top:20px}table{width:100%;border-collapse:collapse;margin-bottom:16px}th{background:#f0f2f5;padding:8px 10px;border:1px solid #ccc;text-align:left}p{margin:4px 0;font-size:14px}ul{margin:4px 0;font-size:14px}</style></head><body><h1>DELC Pet Pantry — Client Record</h1><p><strong>${cl.firstName} ${cl.lastName}</strong></p>${cl.phone?`<p>📞 ${cl.phone}</p>`:''}${cl.email?`<p>✉️ ${cl.email}</p>`:''}${cl.address?`<p>📍 ${cl.address}</p>`:''}${cl.notes?`<p><em>Notes: ${cl.notes}</em></p>`:''}<h2>Animals (${(cl.pets||[]).length})</h2>${petsHtml?`<ul>${petsHtml}</ul>`:'<p>None on file.</p>'}${resourcesHtml}<h2>Pickup History (${cDists.length} visit${cDists.length!==1?'s':''})</h2>${cDists.length?`<table><thead><tr><th>Product</th><th>Animal</th><th>Category</th><th>Qty</th></tr></thead><tbody>${rows}</tbody></table>`:'<p>No pickups on file.</p>'}<p style="margin-top:30px;font-size:12px;color:#aaa">Printed ${new Date().toLocaleDateString()} — DELC Pet Pantry</p></body></html>`);
-    w.print();
+    w.document.write(`<html><head><title>Client History — ${cl.firstName} ${cl.lastName}</title><style>@page{margin:.5in}body{font-family:sans-serif;padding:0;max-width:800px;margin:0 auto}h1{color:#1B3254}h2{color:#1B3254;font-size:15px;margin-top:20px}table{width:100%;border-collapse:collapse;margin-bottom:16px}th{background:#eef1f6;padding:8px 10px;border:1px solid #ccc;text-align:left}p{margin:4px 0;font-size:14px}ul{margin:4px 0;font-size:14px}${window.DELC?DELC.printCss:''}</style></head><body>${window.DELC?DELC.letterhead({title:'Client record — '+cl.firstName+' '+cl.lastName,sub:'Pet Pantry · printed '+today()}):'<h1>DELC Pet Pantry — Client Record</h1><p><strong>'+cl.firstName+' '+cl.lastName+'</strong></p>'}${cl.phone?`<p>📞 ${cl.phone}</p>`:''}${cl.email?`<p>✉️ ${cl.email}</p>`:''}${cl.address?`<p>📍 ${cl.address}</p>`:''}${cl.notes?`<p><em>Notes: ${cl.notes}</em></p>`:''}<h2>Animals (${(cl.pets||[]).length})</h2>${petsHtml?`<ul>${petsHtml}</ul>`:'<p>None on file.</p>'}${resourcesHtml}<h2>Pickup History (${cDists.length} visit${cDists.length!==1?'s':''})</h2>${cDists.length?`<table><thead><tr><th>Product</th><th>Animal</th><th>Category</th><th>Qty</th></tr></thead><tbody>${rows}</tbody></table>`:'<p>No pickups on file.</p>'}<p style="margin-top:30px;font-size:12px;color:#aaa">Printed ${new Date().toLocaleDateString()} — DELC Pet Pantry</p>${window.DELC?DELC.footer('delcPETPANTRY','Client record'):''}</body></html>`);
+    w.document.close();setTimeout(()=>{w.focus();w.print();},350);
   }
 
   async function deleteClient(id){
@@ -1003,12 +1049,12 @@ function Clients({clients,setClients,distributions,setDistributions,products,inv
 
   function openEditDist(d){setEditDist(d);setEditDistItems(d.items.map(i=>({...i,id:i.id||uid()})));setEditDistDate(d.date);setEditDistNotes(d.notes||'');setEditUpcInput('');}
   function closeEditDist(){setEditDist(null);setEditDistItems([]);setEditConfirm(false);}
-  function editDistAddByUPC(){const code=editUpcInput.trim();if(!code)return;const prod=products.find(p=>p.upc===code);if(!prod){alert('Product not found in master.');return;}const existing=editDistItems.findIndex(i=>i.productId===prod.id);if(existing>=0){setEditDistItems(prev=>prev.map((it,i)=>i===existing?{...it,qty:it.qty+1}:it));}else{setEditDistItems(prev=>[...prev,{id:uid(),productId:prod.id,qty:1,notes:''}]);}setEditUpcInput('');}
+  function editDistAddByUPC(){const code=editUpcInput.trim();if(!code)return;const prod=products.find(p=>p.upc===code);if(!prod){say('Product not found in master.');return;}const existing=editDistItems.findIndex(i=>i.productId===prod.id);if(existing>=0){setEditDistItems(prev=>prev.map((it,i)=>i===existing?{...it,qty:it.qty+1}:it));}else{setEditDistItems(prev=>[...prev,{id:uid(),productId:prod.id,qty:1,notes:''}]);}setEditUpcInput('');}
   function editDistAddProduct(p){const existing=editDistItems.findIndex(i=>i.productId===p.id);if(existing>=0){setEditDistItems(prev=>prev.map((it,i)=>i===existing?{...it,qty:it.qty+1}:it));}else{setEditDistItems(prev=>[...prev,{id:uid(),productId:p.id,qty:1,notes:''}]);}}
   function saveEditDist(){
     const originalMap={};editDist.items.forEach(i=>{originalMap[i.productId]=(originalMap[i.productId]||0)+i.qty;});
     const newMap={};editDistItems.forEach(i=>{newMap[i.productId]=(newMap[i.productId]||0)+i.qty;});
-    for(const item of editDistItems){const origQty=originalMap[item.productId]||0;const delta=item.qty-origQty;if(delta>0&&(inv[item.productId]||0)<delta){const p=products.find(p=>p.id===item.productId);alert(`Not enough stock for ${p?.name}. Only ${inv[item.productId]||0} additional units available.`);return;}}
+    for(const item of editDistItems){const origQty=originalMap[item.productId]||0;const delta=item.qty-origQty;if(delta>0&&(inv[item.productId]||0)<delta){const p=products.find(p=>p.id===item.productId);say(`Not enough stock for ${p?.name}. Only ${inv[item.productId]||0} additional units available.`);return;}}
     setInventory(prev=>prev.map(i=>{const wasGiven=originalMap[i.productId]||0;const nowGiven=newMap[i.productId]||0;const delta=wasGiven-nowGiven;return delta!==0?{...i,qty:i.qty+delta}:i;}));
     setDistributions(prev=>prev.map(d=>d.id===editDist.id?{...d,date:editDistDate,notes:editDistNotes,items:editDistItems.map(i=>({productId:i.productId,qty:i.qty,notes:i.notes||''}))}:d));
     closeEditDist();
@@ -1029,7 +1075,7 @@ function Clients({clients,setClients,distributions,setDistributions,products,inv
     const [petForm,setPetForm]=useState({name:'',animalType:'Cat',breed:'',age:'',specialNotes:'',foodPref:''});
 
     function savePet(){
-      if(!petForm.name.trim()){alert('Pet name required');return;}
+      if(!petForm.name.trim()){say('Pet name required');return;}
       if(editPet){setForm(f=>({...f,pets:f.pets.map(p=>p.id===editPet.id?{...p,...petForm}:p)}));}
       else{setForm(f=>({...f,pets:[...f.pets,{...petForm,id:uid()}]}));}
       setPetModal(false);setEditPet(null);setPetForm({name:'',animalType:'Cat',breed:'',age:'',specialNotes:'',foodPref:''});
@@ -1095,7 +1141,7 @@ function Clients({clients,setClients,distributions,setDistributions,products,inv
 
         <div style={{display:'flex',gap:10,justifyContent:'flex-end',marginTop:14}}>
           <button className="btn btn-outline" onClick={onCancel}>Cancel</button>
-          <button className="btn btn-primary" onClick={()=>{if(!form.firstName||!form.lastName){alert('Name required');return;}onSave(form);}}>Save Client</button>
+          <button className="btn btn-primary" onClick={()=>{if(!form.firstName||!form.lastName){say('Name required');return;}onSave(form);}}>Save Client</button>
         </div>
 
         {/* Pet Modal */}
@@ -1376,9 +1422,9 @@ function RecordPickup({clients,products,inventory,setInventory,distributions,set
   const prodMap=useMemo(()=>{const m={};products.forEach(p=>m[p.id]=p);return m;},[products]);
   useEffect(()=>{if(params?.clientId){const cl=clients.find(c=>c.id===params.clientId);if(cl)setSelectedClient(cl);}},[params]);
   const clientsFiltered=clients.filter(c=>{const q=search.toLowerCase();return !q||(c.firstName+' '+c.lastName+c.phone+c.email).toLowerCase().includes(q);});
-  function addByUPC(){const code=upcInput.trim();if(!code)return;const prod=products.find(p=>p.upc===code);if(!prod){alert('Product not found in master. Please add it first.');return;}const existing=items.findIndex(i=>i.productId===prod.id);if(existing>=0){setItems(prev=>prev.map((it,i)=>i===existing?{...it,qty:it.qty+1}:it));}else{setItems(prev=>[...prev,{id:uid(),productId:prod.id,qty:1,notes:''}]);}setUpcInput('');upcRef.current?.focus();}
+  function addByUPC(){const code=upcInput.trim();if(!code)return;const prod=products.find(p=>p.upc===code);if(!prod){say('Product not found in master. Please add it first.');return;}const existing=items.findIndex(i=>i.productId===prod.id);if(existing>=0){setItems(prev=>prev.map((it,i)=>i===existing?{...it,qty:it.qty+1}:it));}else{setItems(prev=>[...prev,{id:uid(),productId:prod.id,qty:1,notes:''}]);}setUpcInput('');upcRef.current?.focus();}
   function addByProduct(p){const existing=items.findIndex(i=>i.productId===p.id);if(existing>=0){setItems(prev=>prev.map((it,i)=>i===existing?{...it,qty:it.qty+1}:it));}else{setItems(prev=>[...prev,{id:uid(),productId:p.id,qty:1,notes:''}]);}}
-  function finalizePickup(){if(!selectedClient){alert('Select a client first.');return;}if(items.length===0){alert('No items selected.');return;}for(const item of items){if((inv[item.productId]||0)<item.qty){const p=prodMap[item.productId];alert(`Insufficient stock for ${p?.name}. Only ${inv[item.productId]||0} available.`);return;}}const dist={id:uid(),clientId:selectedClient.id,date:pickupDate,notes,items:items.map(i=>({productId:i.productId,qty:i.qty,notes:i.notes}))};const updates={};items.forEach(i=>{updates[i.productId]=(updates[i.productId]||0)+i.qty;});setInventory(prev=>prev.map(i=>updates[i.productId]!==undefined?{...i,qty:i.qty-updates[i.productId]}:i));setDistributions(prev=>[dist,...prev]);setItems([]);setNotes('');setConfirm(false);alert(`Pickup recorded for ${selectedClient.firstName} ${selectedClient.lastName}! ✅`);navigate('clients',{clientId:selectedClient.id});}
+  function finalizePickup(){if(!selectedClient){say('Select a client first.');return;}if(items.length===0){say('No items selected.');return;}for(const item of items){if((inv[item.productId]||0)<item.qty){const p=prodMap[item.productId];say(`Insufficient stock for ${p?.name}. Only ${inv[item.productId]||0} available.`);return;}}const dist={id:uid(),clientId:selectedClient.id,date:pickupDate,notes,items:items.map(i=>({productId:i.productId,qty:i.qty,notes:i.notes}))};const updates={};items.forEach(i=>{updates[i.productId]=(updates[i.productId]||0)+i.qty;});setInventory(prev=>prev.map(i=>updates[i.productId]!==undefined?{...i,qty:i.qty-updates[i.productId]}:i));setDistributions(prev=>[dist,...prev]);setItems([]);setNotes('');setConfirm(false);say(`Pickup recorded for ${selectedClient.firstName} ${selectedClient.lastName}! ✅`);navigate('clients',{clientId:selectedClient.id});}
   if(!selectedClient){return(<div className="page"><div className="section-header mb-4"><div className="section-title">🛍 Record Pickup — Select Client</div></div><div className="search-bar mb-4"><input className="form-control lg" placeholder="Search client by name, phone, or email…" value={search} onChange={e=>setSearch(e.target.value)} autoFocus/></div><div className="grid-3">{clientsFiltered.length===0&&<div className="card" style={{gridColumn:'1/-1'}}><div className="empty-state"><div className="icon">👥</div><h3>No clients found</h3></div></div>}{clientsFiltered.map(c=>(<div key={c.id} className="client-card" onClick={()=>setSelectedClient(c)}><div style={{display:'flex',gap:12,alignItems:'center'}}><div className="client-avatar">{c.firstName[0]}{c.lastName[0]}</div><div><div className="font-bold">{c.firstName} {c.lastName}</div>{c.phone&&<div className="text-sm text-muted">{c.phone}</div>}<div className="text-xs text-muted">{(c.pets||[]).length} animal{(c.pets||[]).length!==1?'s':''}</div></div></div></div>))}</div><div className="mt-4"><button className="btn btn-outline" onClick={()=>navigate('clients')}>+ Add New Client First</button></div></div>);}
   return(
     <div className="page">
@@ -1475,7 +1521,7 @@ function NewRequestModal({show,onClose,clients,setClients,setRequests}){
   const matches=useMemo(()=>{const q=clientSearch.trim().toLowerCase();if(!q)return[];return clients.filter(c=>(c.firstName+' '+c.lastName+' '+(c.phone||'')).toLowerCase().includes(q)).slice(0,8);},[clientSearch,clients]);
 
   async function quickAddClient(){
-    if(!qaFirst.trim()||!qaLast.trim()){alert('First and last name required.');return;}
+    if(!qaFirst.trim()||!qaLast.trim()){say('First and last name required.');return;}
     const nc={id:uid(),firstName:qaFirst.trim(),lastName:qaLast.trim(),phone:qaPhone.trim(),email:'',address:'',notes:'',pets:[],resources:[]};
     await setClients(prev=>[...prev,nc]);
     setSelectedClient(nc);setShowQuickAdd(false);
@@ -1486,9 +1532,9 @@ function NewRequestModal({show,onClose,clients,setClients,setRequests}){
   function removeItem(id){setItems(prev=>prev.filter(it=>it.id!==id));}
 
   async function save(){
-    if(!selectedClient){alert('Select or add a client first.');return;}
+    if(!selectedClient){say('Select or add a client first.');return;}
     const validItems=items.filter(it=>it.category);
-    if(validItems.length===0){alert('Add at least one requested item.');return;}
+    if(validItems.length===0){say('Add at least one requested item.');return;}
     setSaving(true);
     const req={id:uid(),clientId:selectedClient.id,date:reqDate,status:'pending',method,notes:notes.trim(),createdBy:createdBy.trim(),createdAt:new Date().toISOString(),fulfilledAt:null,distributionId:null,items:validItems.map(it=>({petName:it.petName.trim(),animalType:it.animalType,category:it.category,description:it.description.trim(),qtyRequested:it.qtyRequested===''?null:(parseFloat(it.qtyRequested)||null)}))};
     await setRequests(prev=>[req,...prev]);
@@ -1564,18 +1610,18 @@ function FulfillRequest({request,client,products,inventory,setInventory,distribu
   const prodMap=useMemo(()=>{const m={};products.forEach(p=>m[p.id]=p);return m;},[products]);
 
   function addByProduct(p){const existing=items.findIndex(i=>i.productId===p.id);if(existing>=0){setItems(prev=>prev.map((it,i)=>i===existing?{...it,qty:it.qty+1}:it));}else{setItems(prev=>[...prev,{id:uid(),productId:p.id,qty:1}]);}}
-  function addByUPC(){const code=upcInput.trim();if(!code)return;const prod=products.find(p=>p.upc===code);if(!prod){alert('Product not found in master. Please add it first.');return;}addByProduct(prod);setUpcInput('');upcRef.current?.focus();}
+  function addByUPC(){const code=upcInput.trim();if(!code)return;const prod=products.find(p=>p.upc===code);if(!prod){say('Product not found in master. Please add it first.');return;}addByProduct(prod);setUpcInput('');upcRef.current?.focus();}
 
   async function complete(){
-    if(items.length===0){alert('Attach at least one product.');return;}
-    for(const item of items){if((inv[item.productId]||0)<item.qty){const p=prodMap[item.productId];alert(`Insufficient stock for ${p?.name}. Only ${inv[item.productId]||0} available.`);return;}}
+    if(items.length===0){say('Attach at least one product.');return;}
+    for(const item of items){if((inv[item.productId]||0)<item.qty){const p=prodMap[item.productId];say(`Insufficient stock for ${p?.name}. Only ${inv[item.productId]||0} available.`);return;}}
     const dist={id:uid(),clientId:request.clientId,date:pickupDate,notes:notes||`Fulfilled request from ${fmtDate(request.date)}`,items:items.map(i=>({productId:i.productId,qty:i.qty,notes:''}))};
     const updates={};items.forEach(i=>{updates[i.productId]=(updates[i.productId]||0)+i.qty;});
     await setInventory(prev=>prev.map(i=>updates[i.productId]!==undefined?{...i,qty:i.qty-updates[i.productId]}:i));
     await setDistributions(prev=>[dist,...prev]);
     await setRequests(prev=>prev.map(r=>r.id===request.id?{...r,status:'fulfilled',fulfilledAt:new Date().toISOString(),distributionId:dist.id}:r));
     setConfirm(false);
-    alert(`Request fulfilled for ${client?client.firstName+' '+client.lastName:'client'}! ✅`);
+    say(`Request fulfilled for ${client?client.firstName+' '+client.lastName:'client'}! ✅`);
     onDone();
   }
 
@@ -1891,9 +1937,9 @@ function Settings({loadAll}){
     await sb.from('pet_clients').delete().neq('id','__none__');
     await sb.from('pet_inventory').delete().neq('id','__none__');
     await sb.from('pet_products').delete().neq('id','__none__');
-    await loadAll();setBusy(false);alert('All data cleared.');setConfirm(null);
+    await loadAll();setBusy(false);say('All data cleared.');setConfirm(null);
   }
-  async function forceSync(){setBusy(true);await loadAll();setBusy(false);alert('Data refreshed from database. ✅');}
+  async function forceSync(){setBusy(true);await loadAll();setBusy(false);say('Data refreshed from database. ✅');}
   return(
     <div className="page">
       <div className="section-header mb-4"><div className="section-title">⚙️ Settings</div></div>
@@ -1950,18 +1996,18 @@ function Ledger({ledger,setLedger,currentUser}){
 
   async function saveEntry(){
     const amt=parseFloat(form.amount);
-    if(!form.date){alert('Date required');return;}
-    if(isNaN(amt)||amt<=0){alert('Enter a valid amount greater than 0');return;}
-    if(!form.description.trim()){alert('Description required');return;}
+    if(!form.date){say('Date required');return;}
+    if(isNaN(amt)||amt<=0){say('Enter a valid amount greater than 0');return;}
+    if(!form.description.trim()){say('Description required');return;}
     const entry={id:editEntry?editEntry.id:uid(),date:form.date,type:form.type,category:form.category,description:form.description.trim(),amount:amt,vendor:form.vendor.trim(),donatedBy:form.donatedBy.trim(),paymentMethod:form.paymentMethod,receiptNumber:form.receiptNumber.trim(),notes:form.notes.trim(),createdBy:currentUser};
     const row={id:entry.id,date:entry.date,type:entry.type,category:entry.category,description:entry.description,amount:entry.amount,vendor:entry.vendor||null,donated_by:entry.donatedBy||null,payment_method:entry.paymentMethod||null,receipt_number:entry.receiptNumber||null,notes:entry.notes||null,created_by:entry.createdBy||null};
     if(editEntry){
       const{error}=await sb.from('pet_ledger').update(row).eq('id',entry.id);
-      if(error){console.error('ledger update:',error);alert('Save failed: '+error.message);return;}
+      if(error){console.error('ledger update:',error);say('Save failed: '+error.message);return;}
       setLedger(prev=>prev.map(e=>e.id===entry.id?entry:e));
     }else{
       const{error}=await sb.from('pet_ledger').insert(row);
-      if(error){console.error('ledger insert:',error);alert('Save failed: '+error.message);return;}
+      if(error){console.error('ledger insert:',error);say('Save failed: '+error.message);return;}
       setLedger(prev=>[...prev,entry]);
     }
     setShowModal(false);setEditEntry(null);setForm(emptyForm);
@@ -2091,21 +2137,32 @@ function Ledger({ledger,setLedger,currentUser}){
   );
 }
 
-// ── LOGIN ─────────────────────────────────────────────────────────────────────
-const PASSWORD='Delc.1200!';
+// ── LOGIN (DELC Apps account; 2026-11-14) ─────────────────────────────────
 function LoginPage({onLogin}){
-  const [username,setUsername]=useState('');const [password,setPassword]=useState('');const [error,setError]=useState('');const [showPw,setShowPw]=useState(false);
-  function handleLogin(e){e.preventDefault();const u=username.trim().toLowerCase();if(!u){setError('Please enter your username.');return;}if(password!==PASSWORD){setError('Incorrect password. Please try again.');return;}if(!/^[a-z][a-z]+$/.test(u)){setError('Username format: first initial + last name (e.g. ddetrich).');return;}onLogin(u);}
+  const [username,setUsername]=useState('');const [password,setPassword]=useState('');const [error,setError]=useState('');const [busy,setBusy]=useState(false);
+  async function handleLogin(e){
+    e.preventDefault();if(busy)return;
+    const u=username.trim().toLowerCase();
+    if(!u||!password){setError('Enter your username and password.');return;}
+    if(typeof DelcAuth==='undefined'){setError('The sign-in service didn’t load. Check the internet connection and reload.');return;}
+    setBusy(true);setError('');let res;
+    try{res=await DelcAuth.login(u,password);}catch(_){res={ok:false,error:'Could not reach the sign-in service. Try again.'};}
+    setBusy(false);
+    if(!res||!res.ok){setError((res&&res.error)||'That username or password isn’t right.');return;}
+    const sess=res.session||DelcAuth.getSession();
+    if(!DelcAuth.hasAppAccess(sess,'pet')){setError('Your account doesn’t have delcPETPANTRY yet. Ask an admin to turn it on in the Admin Portal.');return;}
+    onLogin(sess);
+  }
   return(
-    <div className="login-page"><div className="login-card">
-      <div className="login-logo"><div className="paw">🐾</div><h1>DELC Pet Pantry</h1><p>Duncansville Evangelical Lutheran Church</p></div>
-      {error&&<div className="login-error">⚠️ {error}</div>}
+    <div className="login-page delc-signin-page"><div className="login-card delc-signin-card">
+      <div className="delc-signin-top"><span dangerouslySetInnerHTML={{__html:window.DELC?DELC.logoImg():''}}/><span className="delc-wm pill">delc<b>PETPANTRY</b></span><h1>Sign in</h1><div className="sub"><b>Pet food pantry — donations, stock and client pickups</b>Use your DELC Apps account — the same username (or email) and password as the DELC Apps Hub.</div></div>
+      {error&&<div className="login-error">{error}</div>}
       <form onSubmit={handleLogin}>
-        <div className="form-group"><label className="form-label">Username</label><input className="form-control lg" value={username} onChange={e=>setUsername(e.target.value)} placeholder="e.g. ddetrich" autoComplete="username" autoFocus/></div>
-        <div className="form-group" style={{position:'relative'}}><label className="form-label">Password</label><input className="form-control lg" type={showPw?'text':'password'} value={password} onChange={e=>setPassword(e.target.value)} placeholder="Enter password" autoComplete="current-password"/><button type="button" onClick={()=>setShowPw(s=>!s)} style={{position:'absolute',right:12,top:34,background:'none',border:'none',cursor:'pointer',color:'var(--gray-400)',fontSize:18}}>{showPw?'🙈':'👁'}</button></div>
-        <button type="submit" className="btn btn-primary btn-lg w-full" style={{marginTop:8}}>Sign In →</button>
+        <div className="form-group"><label className="form-label" htmlFor="pp_u">Username or email</label><input id="pp_u" className="form-control lg" value={username} onChange={e=>setUsername(e.target.value)} placeholder="e.g. ddetrich" autoComplete="username" autoFocus/></div>
+        <div className="form-group"><label className="form-label" htmlFor="pp_p">Password</label><input id="pp_p" className="form-control lg" type="password" value={password} onChange={e=>setPassword(e.target.value)} autoComplete="current-password"/></div>
+        <button type="submit" className="btn btn-primary btn-lg w-full" style={{marginTop:8}} disabled={busy}>{busy?'Signing in…':'Sign in'}</button>
       </form>
-      <div className="login-hint"><strong>Username format:</strong> first initial + last name, no spaces<br/><strong>Example:</strong> Derek Detrich → <code>ddetrich</code><br/><strong>Example:</strong> Jane Smith → <code>jsmith</code></div>
+      <div className="delc-signin-links"><a href="https://delcdata.github.io/DELCAppsHub/">DELC Apps Hub</a></div>
     </div></div>
   );
 }
@@ -2117,7 +2174,7 @@ function App(){
       const session=DelcAuth.getSession();
       if(session&&DelcAuth.hasAppAccess(session,"pet"))return session.username;
     }
-    return LS.get('currentUser',null);
+    return null;
   });
   const [page,setPage]=useState('dashboard');
   const [pageParams,setPageParams]=useState(null);
@@ -2173,7 +2230,6 @@ function App(){
   }
 
   useEffect(()=>{if(currentUser) loadAll();},[currentUser]);
-  useEffect(()=>LS.set('currentUser',currentUser),[currentUser]);
 
   // ── SUPABASE WRITE HELPERS ───────────────────────────────────────────────
   async function setProducts(updater){const next=typeof updater==='function'?updater(products):updater;setProductsState(next);await sb.from('pet_products').upsert(next.map(productToRow));}
@@ -2227,32 +2283,34 @@ function App(){
   const inv=useMemo(()=>{const m={};inventory.forEach(i=>m[i.productId]=i.qty);return m;},[inventory]);
   const outCount=useMemo(()=>[...CAT_CATEGORIES.map(c=>({a:'Cat',c})),...DOG_CATEGORIES.map(c=>({a:'Dog',c}))].filter(({a,c})=>{const ps=products.filter(p=>p.animalType===a&&p.category===c);return ps.length>0&&ps.every(p=>(inv[p.id]||0)===0);}).length,[products,inv]);
 
-  function handleLogin(username){setCurrentUser(username);}
+  function handleLogin(sess){setCurrentUser(sess.username);}
+  const hubSess=typeof DelcAuth!=='undefined'?DelcAuth.getSession():null;
+  const displayName=(hubSess&&hubSess.displayName)||currentUser;
   function handleLogout(){if(typeof DelcAuth!=="undefined")DelcAuth.clearSession();setCurrentUser(null);setPage('dashboard');}
   function navigate(pg,params){setPage(pg);setPageParams(params||null);}
 
   if(!currentUser) return <LoginPage onLogin={handleLogin}/>;
-  if(loading) return(<div style={{minHeight:'100vh',background:'var(--navy-dark)',display:'flex',alignItems:'center',justifyContent:'center',flexDirection:'column',gap:16}}><div style={{fontSize:52}}>🐾</div><div style={{color:'var(--gold)',fontSize:20,fontWeight:700}}>Loading Pet Pantry…</div><div style={{color:'rgba(255,255,255,.5)',fontSize:14}}>Connecting to database</div></div>);
-  if(dbError) return(<div style={{minHeight:'100vh',background:'var(--navy-dark)',display:'flex',alignItems:'center',justifyContent:'center',flexDirection:'column',gap:16,padding:24}}><div style={{fontSize:48}}>⚠️</div><div style={{color:'var(--gold)',fontSize:18,fontWeight:700}}>Database Connection Error</div><div style={{color:'rgba(255,255,255,.7)',fontSize:14,textAlign:'center',maxWidth:400}}>{dbError}</div><button className="btn btn-gold" onClick={loadAll}>Retry</button></div>);
+  if(loading) return(<div style={{minHeight:'100vh',background:'var(--navy-dark)',display:'flex',alignItems:'center',justifyContent:'center',flexDirection:'column',gap:16}}><div style={{fontSize:52}}>🐾</div><div style={{color:'#fff',fontSize:20,fontWeight:700}}>Loading delcPETPANTRY…</div><div style={{color:'rgba(255,255,255,.5)',fontSize:14}}>Connecting to database</div></div>);
+  if(dbError) return(<div style={{minHeight:'100vh',background:'var(--navy-dark)',display:'flex',alignItems:'center',justifyContent:'center',flexDirection:'column',gap:16,padding:24}}><div style={{fontSize:48}}>⚠️</div><div style={{color:'#fff',fontSize:18,fontWeight:700}}>Database Connection Error</div><div style={{color:'rgba(255,255,255,.7)',fontSize:14,textAlign:'center',maxWidth:400}}>{dbError}</div><button className="btn" style={{background:'#fff',color:'var(--navy)'}} onClick={loadAll}>Retry</button></div>);
 
   const NAV=[
-    {id:'dashboard',icon:'🏠',label:'Dashboard'},
+    {id:'dashboard',icon:'🏠',label:'Dashboard',short:'Dashboard'},
     {section:'Donations'},
-    {id:'receive',icon:'📥',label:'Receive Donations'},
-    {id:'batch-review',icon:'📋',label:'Batch Review',badge:pendingCount},
+    {id:'receive',icon:'📥',label:'Receive Donations',short:'Receive'},
+    {id:'batch-review',icon:'📋',label:'Batch Review',short:'Batch review',badge:pendingCount},
     {section:'Inventory'},
-    {id:'inventory',icon:'📦',label:'Inventory',badge:outCount?`${outCount} out`:null},
-    {id:'stock-count',icon:'🔢',label:'Stock Count'},
-    {id:'products',icon:'🏷',label:'Product Master'},
-    {id:'adjustments',icon:'📊',label:'Adjustments'},
+    {id:'inventory',icon:'📦',label:'Inventory',short:'Inventory',badge:outCount?`${outCount} out`:null},
+    {id:'stock-count',icon:'🔢',label:'Stock Count',short:'Stock count'},
+    {id:'products',icon:'🏷',label:'Product Master',short:'Products'},
+    {id:'adjustments',icon:'📊',label:'Adjustments',short:'Adjustments'},
     {section:'Clients'},
-    {id:'clients',icon:'👥',label:'Clients'},
-    {id:'requests',icon:'📝',label:'Requests',badge:pendingRequestCount||null},
-    {id:'pickup',icon:'🛍',label:'Record Pickup'},
+    {id:'clients',icon:'👥',label:'Clients',short:'Clients'},
+    {id:'requests',icon:'📝',label:'Requests',short:'Requests',badge:pendingRequestCount||null},
+    {id:'pickup',icon:'🛍',label:'Record Pickup',short:'Pickup'},
     {section:'System'},
-    {id:'ledger',icon:'💰',label:'Ledger'},
-    {id:'reports',icon:'📈',label:'Reports'},
-    {id:'settings',icon:'⚙️',label:'Settings'},
+    {id:'ledger',icon:'💰',label:'Ledger',short:'Ledger'},
+    {id:'reports',icon:'📈',label:'Reports',short:'Reports'},
+    {id:'settings',icon:'⚙️',label:'Settings',short:'Settings'},
   ];
   const PAGE_TITLES={dashboard:'Dashboard',receive:'Receive Donations','batch-review':'Batch Review',inventory:'Inventory','stock-count':'Stock Count',products:'Product Master',adjustments:'Adjustments Log',clients:'Clients',requests:'Requests',pickup:'Record Pickup',ledger:'Financial Ledger',reports:'Reports',settings:'Settings'};
 
@@ -2278,22 +2336,18 @@ function App(){
 
   return(
     <>
-      <nav className="sidebar">
-        <div className="sidebar-logo"><div style={{fontSize:36}}>🐾</div><div className="sidebar-logo-text">DELC Pet Pantry</div><div className="sidebar-logo-sub">Duncansville ELC</div></div>
-        {NAV.map((item,i)=>{if(item.section)return <div key={i} className="sidebar-section"><div className="sidebar-section-label">{item.section}</div></div>;return(<button key={item.id} className={`nav-item ${page===item.id?'active':''}`} onClick={()=>navigate(item.id)}><span className="icon">{item.icon}</span><span>{item.label}</span>{item.badge?<span style={{marginLeft:'auto',background:'var(--red)',color:'white',borderRadius:10,fontSize:10,padding:'2px 6px',fontWeight:700}}>{item.badge}</span>:null}</button>);})}
-      </nav>
+      <div className="pp-bar">
+        <header className="pp-top">
+          <span className="delc-wm">delc<b>PETPANTRY</b></span><span className="pp-sp"/>
+          <span className="pp-user">{displayName}</span>
+          <a className="delc-hbtn" href="https://delcdata.github.io/DELCAppsHub/" title="Back to the DELC Apps Hub">Apps</a>
+          <button type="button" className="delc-hbtn" onClick={handleLogout}>Sign out</button>
+        </header>
+        <nav className="delc-tabs" aria-label="Sections">
+          {NAV.filter(item=>!item.section).map(item=>(<button key={item.id} type="button" className={`delc-tab ${page===item.id?'on':''}`} onClick={()=>navigate(item.id)}>{item.short||item.label}{item.badge?<span className="pp-n">{item.badge}</span>:null}</button>))}
+        </nav>
+      </div>
       <div className="main">
-        <div className="topbar">
-          <span className="topbar-title">{PAGE_TITLES[page]||page}</span>
-          <div style={{display:'flex',gap:8,alignItems:'center'}}>
-            {outCount>0&&<span className="badge badge-out">🚫 {outCount} categor{outCount===1?'y':'ies'} out</span>}
-            {pendingCount>0&&<span className="badge badge-pending">⏳ {pendingCount} Pending</span>}
-            <div style={{display:'flex',alignItems:'center',gap:8,marginLeft:8,paddingLeft:12,borderLeft:'1px solid var(--gray-200)'}}>
-              <span style={{fontSize:13,color:'var(--gray-600)'}}>👤 <strong>{currentUser}</strong></span>
-              <button className="btn btn-sm btn-outline" onClick={handleLogout}>Sign Out</button>
-            </div>
-          </div>
-        </div>
         {renderPage()}
       </div>
     </>
